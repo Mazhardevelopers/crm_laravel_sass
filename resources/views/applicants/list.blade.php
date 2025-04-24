@@ -1,5 +1,12 @@
 @extends('layouts.vertical', ['title' => 'Applicant List', 'subTitle' => 'Home'])
+@section('style')
+<style>
+    .dropdown-toggle::after {
+        display: none !important;
+    }
+</style>
 
+@endsection
 @section('content')
 <div class="row">
     <div class="col-lg-12">
@@ -63,8 +70,12 @@
                     <table id="applicants_table" class="table align-middle text-nowrap table-hover table-centered mb-0">
                         <thead class="bg-light-subtle">
                             <tr>
+                                <th scope="col">
+                                    <div class="form-check">
+                                         <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault5">
+                                    </div>
+                               </th>
                                 <th>Date</th>
-                                <th>Status</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Title</th>
@@ -76,11 +87,18 @@
                                 <th>Experience</th>
                                 <th>Source</th>
                                 <th>Notes</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
+                                <td>
+                                    <div class="form-check">
+                                         <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                                    </div>
+                               </td>
+                                <td>{{ now() }}</td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         <div>
@@ -92,212 +110,34 @@
                                     </div>
 
                                 </td>
-                                <td>Lincoln Drive Harrisburg, PA 17101 U.S.A</td>
                                 <td>michaelminer@dayrep.com</td>
-                                <td>+787 608-360-0464</td>
+                                <td>RGN</td>
+                                <td>Nurse</td>
+                                <td>PR2 3RN</td>
+                                <td>+787 360-0464</td>
+                                <td>+787 608-4521</td>
+                                <td>-</td>
                                 <td>5 Year</td>
-                                <td>21 May 2018</td>
+                                <td>Neech</td>
+                                <td><iconify-icon icon="solar:file-text-outline" class="align-middle fs-24" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="HE SAID I JUST GOT AN OFFER LET ME THINK AOUT IT AND I WILLL GET BACK TO YOU ON MONDAY ----------- Current Employer Name: updated cv attached PostCode: BB4 7NW Current/Expected Salary: 20.28PHR Qualification: rgn Transport Type: Car Shift Pattern: Night, Full Time Nursing Home: Yes Alternate Weekend: Yes Interview Availability: Available No Job: No Visa Status: British Travel Range: 1 hour by CAR Details:"></iconify-icon></td>
                                 <td><span class="badge bg-success-subtle text-success py-1 px-2 fs-13">Active</span></td>
                                 <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
+                                    <div class="btn-group dropstart">
+                                        <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">Edit</a></li>
+                                            <li><a class="dropdown-item" href="#">View</a></li>
+                                            <li><a class="dropdown-item" href="#">Something else here</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#">Separated link</a></li>
+                                        </ul>
                                     </div>
+                                    
+                                    
                                 </td>
                             </tr>
-
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-3.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Theresa T. Brose</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>Boulevard Cockeysville TX 75204</td>
-                                <td>theresbrosea@dayrep.com</td>
-                                <td>+787 314-832-1736</td>
-                                <td>2Year</td>
-                                <td>24 Apr 2022</td>
-                                <td><span class="badge bg-success-subtle text-success py-1 px-2 fs-13">Active</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-
-
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-4.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Walter L. Calab</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>Woodside Circle Panama City, FL 32401</td>
-                                <td>walterlcalabre@jourrapide.com</td>
-                                <td>+787 516-557-2847</td>
-                                <td>7 Year</td>
-                                <td>04 Jan 2015</td>
-                                <td><span class="badge bg-danger-subtle text-danger py-1 px-2 fs-13">Inactive</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-5.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Olive Mize</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>Emily Drive Sumter, SC 29150</td>
-                                <td>olivehmize@rhyta.com</td>
-                                <td>+787 858-947-3422</td>
-                                <td>3 Year</td>
-                                <td>01 Dec 2020</td>
-                                <td><span class="badge bg-success-subtle text-success py-1 px-2 fs-13">Active</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-
-
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-6.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Christa Sardina</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>Cmans Lane Albuquerque, NM 87109 </td>
-                                <td>christasardina@dayrep.com</td>
-                                <td>+787 573-758-6605</td>
-                                <td>4 Year</td>
-                                <td>23 May 2019</td>
-                                <td><span class="badge bg-danger-subtle text-danger py-1 px-2 fs-13">Inactive</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-7.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Darren Rivera</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>465 Chapmans Lane Albuquerque,</td>
-                                <td>darrenwrivera@dayrep.com</td>
-                                <td>+787 580-969-0491</td>
-                                <td>5 Year</td>
-                                <td>6 Sep 2015</td>
-                                <td><span class="badge bg-success-subtle text-success py-1 px-2 fs-13">Active</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-
-
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-8.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Robert V. Leavitt</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>Stockert Hollow Road Redmond, WA 98052</td>
-                                <td>robertvleavitt@dayrep.com</td>
-                                <td>+787 361-318-4753</td>
-                                <td>2 Year</td>
-                                <td>05 Jun 2021</td>
-                                <td><span class="badge bg-success-subtle text-success py-1 px-2 fs-13">Active</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <img src="/images/users/avatar-9.jpg" alt="" class="avatar-sm rounded-circle">
-                                        </div>
-                                        <div>
-                                            <a href="#!" class="text-dark fw-medium fs-15">Lydia Anderson</a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                                <td>Conaway Street Bloomington, IN 47408</td>
-                                <td>lydiajanderson@dayrep.com</td>
-                                <td>+787 602-851-1066</td>
-                                <td>3 Year</td>
-                                <td>28 May 2017</td>
-                                <td><span class="badge bg-danger-subtle text-danger py-1 px-2 fs-13">Inactive</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="#!" class="btn btn-light btn-sm"><iconify-icon icon="solar:eye-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-primary btn-sm"><iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                        <a href="#!" class="btn btn-soft-danger btn-sm"><iconify-icon icon="solar:trash-bin-minimalistic-2-broken" class="align-middle fs-18"></iconify-icon></a>
-                                    </div>
-                                </td>
-                            </tr>
-
                         </tbody>
                     </table>
                 </div>
@@ -319,13 +159,11 @@
 
 </div>
 
-@endsection
 @section('script')
-
-<script src="/js/pages/applicants.init.js"></script>
-@push('styles') 
 <script>
-    alert('Hello, this is a test alert!');
+    document.addEventListener('DOMContentLoaded', function() {
+        
+    });
 </script>
-@endpush
+@endsection
 @endsection
