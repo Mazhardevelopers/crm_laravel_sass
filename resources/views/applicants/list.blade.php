@@ -53,7 +53,7 @@
                             <button type="button" class="btn btn-outline-primary me-1" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Import CSV">
                                 <i class="ri-upload-line"></i>
                             </button>
-                            <button type="button" class="btn btn-success me-1"><i class="ri-add-line"></i> New Applicant</button>
+                            <a href="{{ route('applicants.create') }}"><button type="button" class="btn btn-success me-1"><i class="ri-add-line"></i> New Applicant</button></a>
                         </div>
                     </div><!-- end col-->
                 </div>
@@ -83,7 +83,7 @@
                                 <th>PostCode</th>
                                 <th>Phone</th>
                                 <th>Landline</th>
-                                <th>Resume</th>
+                                <th>Resumes</th>
                                 <th>Experience</th>
                                 <th>Source</th>
                                 <th>Notes</th>
@@ -92,7 +92,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            {{-- <tr>
                                 <td>
                                     <div class="form-check">
                                          <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
@@ -134,25 +134,12 @@
                                             <li><a class="dropdown-item" href="#">Separated link</a></li>
                                         </ul>
                                     </div>
-                                    
-                                    
                                 </td>
-                            </tr>
+                            </tr> --}}
                         </tbody>
                     </table>
                 </div>
                 <!-- end table-responsive -->
-            </div>
-            <div class="card-footer">
-                <nav aria-label="Page navigation example">
-                    <ul class="pagination justify-content-end mb-0">
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">Previous</a></li>
-                        <li class="page-item active"><a class="page-link" href="javascript:void(0);">1</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">2</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">3</a></li>
-                        <li class="page-item"><a class="page-link" href="javascript:void(0);">Next</a></li>
-                    </ul>
-                </nav>
             </div>
         </div>
     </div>
@@ -160,10 +147,107 @@
 </div>
 
 @section('script')
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        
-    });
+   document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('applicants_table');
+    const tbody = table.querySelector('tbody');
+    const url = @json(route('applicants.getApplicants'));
+    
+    // Add loading state
+    const loadingRow = document.createElement('tr');
+    loadingRow.innerHTML = `<td colspan="14" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </td>`;
+    tbody.appendChild(loadingRow);
+
+    const fetchData = async () => {
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const { data } = await response.json();
+            
+            // Clear loading state
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4">No applicants found</td></tr>`;
+                return;
+            }
+            
+            populateTable(data);
+            
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-danger">
+                Error loading data. Please try again later.
+            </td></tr>`;
+        }
+    };
+
+    const populateTable = (data) => {
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.dataset.id = row.id; // Store ID for future reference
+
+            // Checkbox column
+            const checkboxTd = document.createElement('td');
+            checkboxTd.innerHTML = `
+                <div class="form-check">
+                    <input class="form-check-input row-checkbox" type="checkbox" value="${row.id}">
+                </div>`;
+            tr.appendChild(checkboxTd);
+
+            // Other columns - ensure all fields exist
+            const columns = [
+                row.created_at,
+                row.applicant_name,
+                row.applicant_email || '-',
+                row.job_title?.name ? row.job_title.name : '-',
+                row.job_category?.name ? row.job_category.name.toUpperCase() : '-',
+                row.applicant_postcode ? row.applicant_postcode.toUpperCase() : '-',
+                row.is_blocked ? `<span class='badge bg-secondary'>Blocked</span>` : (row.applicant_phone || '-'),
+                row.is_blocked ? '' : (row.applicant_landline || '-'),
+                `
+                    ${row.applicant_cv ? `<a href="${row.applicant_cv}" target="_blank">View CV</a>` : '-'}
+                    ${row.updated_cv ? `<a href="${row.updated_cv}" target="_blank" class="ms-2">View Updated CV</a>` : '-'}
+                `,
+                row.applicant_experience || '-',
+                row.job_source?.name ? row.job_source.name : '-',
+                row.applicant_notes || '-',
+                row.status ? `<span class="badge bg-success-subtle text-success py-1 px-2 fs-13">Active</span>` : '-'
+            ];
+
+            columns.forEach(col => {
+                const td = document.createElement('td');
+                td.innerHTML = col;
+                tr.appendChild(td);
+            });
+
+            // Apply row styles
+            if (row.is_blocked) {
+                tr.classList.add('table-secondary');
+            } else if (row.temp_not_interested) {
+                tr.classList.add('table-warning');
+            }
+
+            tbody.appendChild(tr);
+        });
+    };
+
+    fetchData();
+});
 </script>
 @endsection
 @endsection

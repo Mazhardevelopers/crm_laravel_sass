@@ -44,10 +44,7 @@ class VectorMap {
   document.addEventListener("DOMContentLoaded", function (e) {
     new VectorMap().init();
   });
-
-
-
-  
+ 
   var t = new Date
   var e = {
       series: [80],

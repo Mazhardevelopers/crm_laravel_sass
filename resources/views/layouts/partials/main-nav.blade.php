@@ -58,7 +58,7 @@
                                    <a class="sub-nav-link" href="{{ route('applicants.list')}}">List View</a>
                               </li>
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('applicants.details',[5])}}">Add Applicant</a>
+                                   <a class="sub-nav-link" href="{{ route('applicants.create')}}">Create Applicant</a>
                               </li>
                          </ul>
                     </div>

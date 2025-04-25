@@ -49,6 +49,7 @@
     "sweetalert2": "^11.5.1",
     "swiper": "^11.1.9",
     "toastify-js": "^1.12.0",
+    "toastr": "^2.1.4",
     "typeahead.js": "^0.11.1",
     "vanilla-wizard": "^0.0.7",
     "wnumb": "^1.2.0"

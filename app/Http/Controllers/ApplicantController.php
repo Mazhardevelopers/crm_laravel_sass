@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Horsefly\Applicant;
+use Horsefly\JobSource;
+use Horsefly\JobCategory;
+use Horsefly\JobTitle;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -11,9 +14,15 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ApplicantController extends Controller
 {
+    public function __construct()
+    {
+        //
+    }
     /**
      * Display a listing of the applicants.
      *
@@ -30,41 +39,160 @@ class ApplicantController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function getApplicantsData(Request $request)
+    public function getApplicants(Request $request)
     {
-        $auth_user = Auth::user();
+        $model = Applicant::query()->with(['jobTitle', 'jobCategory', 'jobSource']);
 
-        $applicants = Applicant::query();
-
-        return DataTables::of($applicants)
-            ->addColumn('notes', function ($applicant) {
-                $latestNote = $applicant->notes()->latest()->first();
-                return $latestNote ? $latestNote->details : 'No notes available';
+        return DataTables::eloquent($model)
+            ->addColumn('checkbox', function($applicant) {
+                return '<input type="checkbox" class="row-checkbox" value="'.$applicant->id.'">';
             })
-            ->addColumn('action', function ($applicant) use ($auth_user) {
-                $actions = '<div class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Actions</a>
-                                <div class="dropdown-menu">';
-                if ($auth_user->can('edit_applicant')) {
-                    $actions .= '<a href="' . route('applicants.edit', $applicant->id) . '" class="dropdown-item">Edit</a>';
-                }
-                if ($auth_user->can('view_applicant')) {
-                    $actions .= '<a href="' . route('applicants.show', $applicant->id) . '" class="dropdown-item">View</a>';
-                }
-                $actions .= '</div></div>';
-                return $actions;
+            ->addColumn('cv_link', function($applicant) {
+                return $applicant->applicant_cv 
+                    ? '<a href="'.asset($applicant->applicant_cv).'" target="_blank">View CV</a>'
+                    : '-';
             })
-            ->editColumn('created_at', function ($applicant) {
-                return $applicant->created_at->format('d M Y, h:i A');
+            ->addColumn('applicant_name', function($applicant) {
+                return $applicant->formatted_applicant_name; // Using accessor
             })
-            ->addColumn('download_cv', function ($applicant) {
-                $filePath = $applicant->applicant_cv;
-                $disabled = (!file_exists($filePath) || !$filePath) ? 'disabled' : '';
-                $href = $disabled ? 'javascript:void(0);' : route('downloadApplicantCv', $applicant->id);
-                return '<a href="' . $href . '" class="btn btn-sm btn-primary ' . $disabled . '">Download CV</a>';
+            ->addColumn('postcode', function($applicant) {
+                return $applicant->formatted_postcode; // Using accessor
             })
-            ->rawColumns(['notes', 'action', 'download_cv'])
-            ->make(true);
+            ->addColumn('phone', function($applicant) {
+                return $applicant->formatted_phone; // Using accessor
+            })
+            ->addColumn('cv_link', function($applicant) {
+                return $applicant->formatted_cv; // Using accessor
+            })
+            ->addColumn('created_at', function($applicant) {
+                return $applicant->formatted_created_at; // Using accessor
+            })
+            ->addColumn('updated_at', function($applicant) {
+                return $applicant->formatted_updated_at; // Using accessor
+            })
+            ->addColumn('updated_cv_link', function($applicant) {
+                return $applicant->updated_cv 
+                    ? '<a href="'.asset($applicant->updated_cv).'" target="_blank">View Updated CV</a>'
+                    : '-';
+            })
+            ->addColumn('status', function($applicant) {
+                return $applicant->is_blocked 
+                    ? '<span class="badge bg-secondary">Blocked</span>' 
+                    : '<span class="badge bg-success">Active</span>';
+            })
+            ->rawColumns(['checkbox', 'cv_link', 'updated_cv_link'])
+            ->toJson();
     }
+    public function downloadCv($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        $filePath = $applicant->cv_path;
 
+        if (Storage::exists($filePath)) {
+            return Storage::download($filePath);
+        } else {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+    }
+    public function applicantDetails($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        return view('applicants.details', compact('applicant'));
+    }
+    public function edit($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        return view('applicants.edit', compact('applicant'));
+    }
+    public function update(Request $request, $id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        $applicant->update($request->all());
+        return redirect()->route('applicants.list')->with('success', 'Applicant updated successfully');
+    }
+    public function destroy($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        $applicant->delete();
+        return redirect()->route('applicants.list')->with('success', 'Applicant deleted successfully');
+    }
+    public function create()
+    {
+        $jobSources = JobSource::all();
+        $jobCategories = JobCategory::all();
+        $jobTitles = JobTitle::all();
+
+        return view('applicants.create', compact('jobSources', 'jobCategories', 'jobTitles'));
+
+    }
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'job_category_id' => 'required|exists:job_categories,id',
+            'job_type' => ['required', Rule::in(['specialist', 'non-specialist'])],
+            'job_title_id' => 'required|exists:job_titles,id',
+            'job_source_id' => 'required|exists:job_sources,id',
+            'applicant_name' => 'required|string|max:255',
+            'applicant_email' => 'required|email|max:255|unique:applicants,applicant_email',
+            'applicant_email_secondary' => 'nullable|email|max:255',
+            'applicant_postcode' => ['required', 'string', 'max:8', 'regex:/^[A-Z0-9 ]+$/'],
+            'applicant_phone' => 'required|string|max:20',
+            'applicant_landline' => 'nullable|string|max:20',
+            'applicant_experience' => 'nullable|string|max:255',
+            'applicant_notes' => 'nullable|string|max:255',
+            'cv_path' => 'nullable|string|max:255',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Please fix the errors in the form'
+            ], 422);
+        }
+    
+        try {
+            $applicantData = $request->only([
+                'job_category_id', 'job_type', 'job_title_id', 'job_source_id',
+                'applicant_name', 'applicant_email', 'applicant_email_secondary',
+                'applicant_postcode', 'applicant_phone', 'applicant_landline',
+                'applicant_experience', 'applicant_notes', 'cv_path'
+            ]);
+    
+            // Format data
+            $applicantData['applicant_phone'] = preg_replace('/[^0-9]/', '', $applicantData['applicant_phone']);
+            $applicantData['applicant_landline'] = $applicantData['applicant_landline'] 
+                ? preg_replace('/[^0-9]/', '', $applicantData['applicant_landline'])
+                : null;
+            $applicantData['user_id'] = Auth::id();
+    
+            $applicant = Applicant::create($applicantData);
+    
+            if ($request->cv_path) {
+                $applicant->update(['applicant_cv' => $request->cv_path]);
+            }
+    
+            // Generate UID
+            $applicant->update(['applicant_uid' => md5(uniqid($applicant->id, true))]);
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Applicant created successfully',
+                'redirect' => route('applicants.list')
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Error creating applicant: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while creating the applicant. Please try again.'
+            ], 500);
+        }
+    }
+    public function show($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        return view('applicants.show', compact('applicant'));
+    }
 }

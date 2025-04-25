@@ -26,9 +26,12 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
    
     Route::group(['prefix' => 'applicants'], function () {
         Route::get('', [ApplicantController::class, 'index'])->name('applicants.list');
-        Route::get('getApplicants', [ApplicantController::class, 'getApplicantsData'])->name('applicants.getApplicants');
+        Route::get('create', [ApplicantController::class, 'create'])->name('applicants.create');
+        Route::post('store', [ApplicantController::class, 'store'])->name('applicants.store');
+        Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
         Route::get('{id}', [ApplicantController::class, 'applicantDetails'])->name('applicants.details');
     });
+    Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('applicants.getApplicants');
 
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
 });
