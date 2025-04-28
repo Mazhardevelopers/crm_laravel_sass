@@ -44,40 +44,40 @@ class ApplicantController extends Controller
         $model = Applicant::query()->with(['jobTitle', 'jobCategory', 'jobSource']);
 
         return DataTables::eloquent($model)
-            ->addColumn('checkbox', function($applicant) {
-                return '<input type="checkbox" class="row-checkbox" value="'.$applicant->id.'">';
+            ->addColumn('checkbox', function ($applicant) {
+                return '<input type="checkbox" class="row-checkbox" value="' . $applicant->id . '">';
             })
-            ->addColumn('cv_link', function($applicant) {
-                return $applicant->applicant_cv 
-                    ? '<a href="'.asset($applicant->applicant_cv).'" target="_blank">View CV</a>'
+            ->addColumn('cv_link', function ($applicant) {
+                return $applicant->applicant_cv
+                    ? '<a href="' . asset($applicant->applicant_cv) . '" target="_blank">View CV</a>'
                     : '-';
             })
-            ->addColumn('applicant_name', function($applicant) {
+            ->addColumn('applicant_name', function ($applicant) {
                 return $applicant->formatted_applicant_name; // Using accessor
             })
-            ->addColumn('postcode', function($applicant) {
+            ->addColumn('postcode', function ($applicant) {
                 return $applicant->formatted_postcode; // Using accessor
             })
-            ->addColumn('phone', function($applicant) {
+            ->addColumn('phone', function ($applicant) {
                 return $applicant->formatted_phone; // Using accessor
             })
-            ->addColumn('cv_link', function($applicant) {
+            ->addColumn('cv_link', function ($applicant) {
                 return $applicant->formatted_cv; // Using accessor
             })
-            ->addColumn('created_at', function($applicant) {
+            ->addColumn('created_at', function ($applicant) {
                 return $applicant->formatted_created_at; // Using accessor
             })
-            ->addColumn('updated_at', function($applicant) {
+            ->addColumn('updated_at', function ($applicant) {
                 return $applicant->formatted_updated_at; // Using accessor
             })
-            ->addColumn('updated_cv_link', function($applicant) {
-                return $applicant->updated_cv 
-                    ? '<a href="'.asset($applicant->updated_cv).'" target="_blank">View Updated CV</a>'
+            ->addColumn('updated_cv_link', function ($applicant) {
+                return $applicant->updated_cv
+                    ? '<a href="' . asset($applicant->updated_cv) . '" target="_blank">View Updated CV</a>'
                     : '-';
             })
-            ->addColumn('status', function($applicant) {
-                return $applicant->is_blocked 
-                    ? '<span class="badge bg-secondary">Blocked</span>' 
+            ->addColumn('status', function ($applicant) {
+                return $applicant->is_blocked
+                    ? '<span class="badge bg-secondary">Blocked</span>'
                     : '<span class="badge bg-success">Active</span>';
             })
             ->rawColumns(['checkbox', 'cv_link', 'updated_cv_link'])
@@ -123,7 +123,6 @@ class ApplicantController extends Controller
         $jobTitles = JobTitle::all();
 
         return view('applicants.create', compact('jobSources', 'jobCategories', 'jobTitles'));
-
     }
     public function store(Request $request)
     {
@@ -133,16 +132,18 @@ class ApplicantController extends Controller
             'job_title_id' => 'required|exists:job_titles,id',
             'job_source_id' => 'required|exists:job_sources,id',
             'applicant_name' => 'required|string|max:255',
+            'gender' => 'required',
             'applicant_email' => 'required|email|max:255|unique:applicants,applicant_email',
             'applicant_email_secondary' => 'nullable|email|max:255',
             'applicant_postcode' => ['required', 'string', 'max:8', 'regex:/^[A-Z0-9 ]+$/'],
             'applicant_phone' => 'required|string|max:20',
             'applicant_landline' => 'nullable|string|max:20',
             'applicant_experience' => 'nullable|string|max:255',
-            'applicant_notes' => 'nullable|string|max:255',
-            'cv_path' => 'nullable|string|max:255',
+            'applicant_notes' => 'required|string|max:255',
+            'have_nursing_home_experience' => 'nullable|boolean',
+            'applicant_cv' => 'nullable|mimes:docx,doc,csv,pdf|max:5000',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -150,40 +151,74 @@ class ApplicantController extends Controller
                 'message' => 'Please fix the errors in the form'
             ], 422);
         }
-    
+
         try {
             $applicantData = $request->only([
-                'job_category_id', 'job_type', 'job_title_id', 'job_source_id',
-                'applicant_name', 'applicant_email', 'applicant_email_secondary',
-                'applicant_postcode', 'applicant_phone', 'applicant_landline',
-                'applicant_experience', 'applicant_notes', 'cv_path'
+                'job_category_id',
+                'job_type',
+                'job_title_id',
+                'job_source_id',
+                'applicant_name',
+                'applicant_email',
+                'applicant_email_secondary',
+                'applicant_postcode',
+                'applicant_phone',
+                'applicant_landline',
+                'applicant_experience',
+                'applicant_notes',
+                'cv_path',
+                'have_nursing_home_experience',
+                'gender',
             ]);
-    
+
             // Format data
             $applicantData['applicant_phone'] = preg_replace('/[^0-9]/', '', $applicantData['applicant_phone']);
-            $applicantData['applicant_landline'] = $applicantData['applicant_landline'] 
+            $applicantData['applicant_landline'] = $applicantData['applicant_landline']
                 ? preg_replace('/[^0-9]/', '', $applicantData['applicant_landline'])
                 : null;
             $applicantData['user_id'] = Auth::id();
-    
+            $path = null;
+
+            if ($request->hasFile('applicant_cv')) {
+                // Get the original filename
+                $filenameWithExt = $request->file('applicant_cv')->getClientOriginalName();
+
+                // Get just the filename without extension
+                $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+
+                // Get just the extension
+                $extension = $request->file('applicant_cv')->getClientOriginalExtension();
+
+                // Create new filename with timestamp
+                $fileNameToStore = $filename . '_' . time() . '.' . $extension;
+
+                // Upload file to public/uploads directory
+                $path = $request->file('applicant_cv')->storeAs('uploads', $fileNameToStore, 'public');
+
+                // For direct move (alternative to storeAs)
+                // $request->file('applicant_cv')->move(public_path('uploads'), $fileNameToStore);
+                // $path = 'uploads/'.$fileNameToStore;
+            }
+
+            $applicantData['applicant_cv'] = $path;
+
             $applicant = Applicant::create($applicantData);
-    
+
             if ($request->cv_path) {
                 $applicant->update(['applicant_cv' => $request->cv_path]);
             }
-    
+
             // Generate UID
             $applicant->update(['applicant_uid' => md5(uniqid($applicant->id, true))]);
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Applicant created successfully',
                 'redirect' => route('applicants.list')
             ]);
-    
         } catch (\Exception $e) {
             Log::error('Error creating applicant: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while creating the applicant. Please try again.'

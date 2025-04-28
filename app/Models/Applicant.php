@@ -19,6 +19,7 @@ class Applicant extends Model
         'job_title_id',
         'applicant_name',
         'applicant_email',
+        'applicant_email_secondary',
         'applicant_postcode',
         'applicant_phone',
         'applicant_landline',
@@ -28,6 +29,8 @@ class Applicant extends Model
         'applicant_experience',
         'lat',
         'lng',
+        'gender',
+        'dob',
 
         // Boolean flags
         'is_blocked',
@@ -92,7 +95,8 @@ class Applicant extends Model
         'formatted_updated_at'
     ];
     protected $hidden = [
-        'deleted_at'
+        'deleted_at',
+        'dob',
     ];
     public function scopeIgnoreBooleans($query)
     {

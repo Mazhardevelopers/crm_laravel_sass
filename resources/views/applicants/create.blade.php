@@ -69,21 +69,32 @@ $jobSources = \Horsefly\JobSource::all();
                             </div>
                         </div>
                         
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_name" class="form-label">Name</label>
                                 <input type="text" id="applicant_name" class="form-control" name="applicant_name" placeholder="Full Name" required>
                                 <div class="invalid-feedback">Please provide a name</div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="">Choose Gender</option>
+                                    <option value="m">Male</option>
+                                    <option value="f">Female</option>
+                                </select>
+                                <div class="invalid-feedback">Please provide gender</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_email_primary" class="form-label">Email <small class="text-info">(Primary)</small></label>
                                 <input type="email" id="applicant_email_primary" class="form-control" name="applicant_email" placeholder="Enter Email" required>
                                 <div class="invalid-feedback">Please provide a valid email</div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_email_secondary" class="form-label">Email <small class="text-info">(Secondary)</small></label>
                                 <input type="email" id="applicant_email_secondary" class="form-control" name="applicant_email_secondary" placeholder="Enter Email">
@@ -120,33 +131,109 @@ $jobSources = \Horsefly\JobSource::all();
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes"></textarea>
+                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required></textarea>
+                                <div class="invalid-feedback">Please provide notes</div>
+
                             </div>
                         </div>
+                        <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Have Nursing Home Experience?</label>
+                                <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
+                                <small class="text-info">This information helps us better understand the applicant's background.</small>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="yes" required>
+                                    <label class="form-check-label" for="nurse_option_yes">Yes</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="no" required>
+                                    <label class="form-check-label" for="nurse_option_no">No</label>
+                                </div>
+                                <div class="invalid-feedback">Please provide a nursing option</div>
+
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const jobCategorySelect = document.getElementById('job_category');
+                                const nurseToggleContainer = document.getElementById('nurseToggleContainer');
+
+                                jobCategorySelect.addEventListener('change', function () {
+                                    const selectedOption = jobCategorySelect.options[jobCategorySelect.selectedIndex];
+                                    if (selectedOption && selectedOption.text.toLowerCase() === 'nurse') {
+                                        nurseToggleContainer.style.display = 'block';
+                                    } else {
+                                        nurseToggleContainer.style.display = 'none';
+                                    }
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Upload Resume</h4>
+                    <h4 class="card-title">Upload Documents</h4>
                 </div>
-                <div class="card-body">
-                    <div class="dropzone bg-light-subtle py-5" id="cvDropzone">
-                        <div class="fallback">
-                            <input name="applicant_cv" type="file" accept=".pdf,.doc,.docx,.csv">
-                        </div>
-                        <div class="dz-message needsclick">
-                            <i class="ri-upload-cloud-2-line fs-48 text-primary"></i>
-                            <h3 class="mt-4">Drop resume here, or <span class="text-primary">click to browse</span></h3>
-                            <span class="text-muted fs-13">
-                                Recommended. docx, doc, csv, and pdf files are allowed
-                            </span>
-                        </div>
+                
+                <!-- Dropzone Container -->
+                <div id="applicantCvDropzone" class="dropzone">
+                    <div class="dz-message needsclick">
+                        <i class="h1 ri-upload-cloud-2-line"></i>
+                        <h3>Drop files here or click to upload.</h3>
+                        <span class="text-muted fs-13">
+                            Allowed file types: docx, doc, csv, pdf (Max 5MB)
+                        </span>
                     </div>
-                    <div id="filePreview" class="mt-3"></div>
                 </div>
+            
+                <!-- Standard File Input (hidden by default) -->
+                <div class="p-3" id="regularFileInput" style="display: none;">
+                    <label class="form-label">Or select file manually:</label>
+                    <input type="file" class="form-control" name="applicant_cv" id="applicant_cv">
+                </div>
+            
+                <!-- Toggle between upload methods -->
+                <div class="text-center p-2">
+                    <button type="button" class="btn btn-sm btn-link" id="toggleUploadMethod">
+                        Switch to manual file selection
+                    </button>
+                </div>
+            
+                <!-- Dropzone Preview -->
+                <ul class="list-unstyled mb-0" id="dropzone-preview">
+                    <li class="mt-2" id="dropzone-preview-list">
+                        <div class="border rounded">
+                            <div class="d-flex p-2">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="avatar-sm bg-light rounded">
+                                        <img data-dz-thumbnail class="img-fluid rounded d-block" src="#" alt="Dropzone-Image" />
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="pt-1">
+                                        <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
+                                        <p class="fs-13 text-muted mb-0" data-dz-size></p>
+                                        <strong class="error text-danger" data-dz-errormessage></strong>
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0 ms-3">
+                                    <button data-dz-remove class="btn btn-sm btn-transparent text-danger">
+                                        <iconify-icon icon="solar:trash-bin-trash-bold" class="align-middle fs-24"></iconify-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
             </div>
+            {{-- <div class="form-group">
+                <label for="applicant_cv">Upload CV</label>
+                <input type="file" class="form-control" name="applicant_cv" id="applicant_cv">
+                <small class="text-muted">Allowed file types: docx, doc, csv, pdf (Max 5MB)</small>
+            </div> --}}
             
             <div class="mb-3 rounded">
                 <div class="row justify-content-end g-2">
@@ -180,105 +267,170 @@ $jobSources = \Horsefly\JobSource::all();
         })
     })()
 
-document.addEventListener('DOMContentLoaded', function() {
-
-    // Handle form submission
-    const form = document.getElementById('createApplicantForm');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-
-        // Collect form data
-        const formData = new FormData(form);
-        
-        // Add any additional data
-        formData.append('job_type', document.getElementById('job_type').value);
-
-        fetch(form.action, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message and redirect
-                alert(data.message);
-                // window.location.href = data.redirect;
-            } else {
-                // Handle validation errors
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Save';
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Dropzone
+        Dropzone.autoDiscover = false;
+        const myDropzone = new Dropzone("#applicantCvDropzone", {
+            url: "/dummy-url",
+            paramName: "applicant_cv",
+            maxFiles: 1,
+            maxFilesize: 5,
+            acceptedFiles: '.docx,.doc,.csv,.pdf',
+            addRemoveLinks: true,
+            autoProcessQueue: false,
+            previewsContainer: "#dropzone-preview",
+            previewTemplate: document.querySelector('#dropzone-preview-list').innerHTML,
+            init: function() {
+                this.on("addedfile", function(file) {
+                    // Sync with regular file input when file is added to Dropzone
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    document.getElementById('applicant_cv').files = dataTransfer.files;
+                    
+                    // Hide regular input when using Dropzone
+                    document.getElementById('regularFileInput').style.display = 'none';
+                });
                 
-                if (data.errors) {
-                    // Clear previous errors
-                    form.querySelectorAll('.is-invalid').forEach(el => {
-                        el.classList.remove('is-invalid');
-                    });
-                    form.querySelectorAll('.invalid-feedback').forEach(el => {
-                        el.textContent = '';
-                    });
+                this.on("removedfile", function(file) {
+                    // Clear regular input when file is removed from Dropzone
+                    document.getElementById('applicant_cv').value = '';
+                    document.getElementById('regularFileInput').style.display = 'block';
+                });
+            }
+        });
 
-                    // Display new errors
-                    Object.entries(data.errors).forEach(([field, messages]) => {
-                        const input = form.querySelector(`[name="${field}"]`);
-                        const feedback = input?.closest('.mb-3')?.querySelector('.invalid-feedback');
-                        
-                        if (input && feedback) {
-                            input.classList.add('is-invalid');
-                            feedback.textContent = messages.join(' ');
-                        }
-                    });
+        // Toggle between upload methods
+        document.getElementById('toggleUploadMethod').addEventListener('click', function() {
+            const dropzone = document.getElementById('applicantCvDropzone');
+            const regularInput = document.getElementById('regularFileInput');
+            
+            if (dropzone.style.display === 'none') {
+                // Switch to Dropzone
+                dropzone.style.display = 'block';
+                regularInput.style.display = 'none';
+                this.textContent = 'Switch to manual file selection';
+            } else {
+                // Switch to regular input
+                dropzone.style.display = 'none';
+                regularInput.style.display = 'block';
+                this.textContent = 'Switch to drag & drop';
+                
+                // Clear any Dropzone files
+                myDropzone.removeAllFiles(true);
+            }
+        });
+
+        // Handle regular file input changes
+        document.getElementById('applicant_cv').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                // Add file to Dropzone if using regular input
+                myDropzone.removeAllFiles(true);
+                myDropzone.addFile(this.files[0]);
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle form submission
+        const form = document.getElementById('createApplicantForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+            // Collect form data
+            const formData = new FormData(form);
+            
+            // Add any additional data
+            formData.append('job_type', document.getElementById('job_type').value);
+          
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message and redirect
+                    alert(data.message);
+                    // window.location.href = data.redirect;
                 } else {
+                    // Handle validation errors
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save';
+                    
                     if (data.errors) {
-                        let errorMessages = Object.values(data.errors).flat().join('\n');
-                        alert('Validation Errors:\n' + errorMessages);
+                        // Clear previous errors
+                        form.querySelectorAll('.is-invalid').forEach(el => {
+                            el.classList.remove('is-invalid');
+                        });
+                        form.querySelectorAll('.invalid-feedback').forEach(el => {
+                            el.textContent = '';
+                        });
+
+                        // Display new errors
+                        Object.entries(data.errors).forEach(([field, messages]) => {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            const feedback = input?.closest('.mb-3')?.querySelector('.invalid-feedback');
+                            
+                            if (input && feedback) {
+                                input.classList.add('is-invalid');
+                                feedback.textContent = messages.join(' ');
+                            }
+                        });
                     } else {
-                        alert(data.message);
+                        if (data.errors) {
+                            let errorMessages = Object.values(data.errors).flat().join('\n');
+                            alert('Validation Errors:\n' + errorMessages);
+                        } else {
+                            alert(data.message);
+                        }
                     }
                 }
-            }
-        })
-        .catch(error => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Save';
-            alert('An unexpected error occurred. Please try again.');
-            console.error('Error:', error);
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Save';
+                alert('An unexpected error occurred. Please try again.');
+                console.error('Error:', error);
+            });
+        });
+
+        // Postcode formatting
+        document.getElementById('applicant_postcode').addEventListener('input', function(e) {
+            const cursorPos = this.selectionStart;
+            let rawValue = this.value.replace(/[^a-z0-9\s]/gi, '');
+            
+            let formattedValue = rawValue.length > 8 
+                ? rawValue.substring(0, 8) 
+                : rawValue;
+            
+            this.value = formattedValue.toUpperCase();
+            
+            const newCursorPos = Math.min(cursorPos, this.value.length);
+            this.setSelectionRange(newCursorPos, newCursorPos);
+        });
+
+        // Phone number formatting
+        ['applicant_phone', 'applicant_landline'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9+]/g, '');
+                if (this.value.startsWith('+')) return;
+                if (this.value.length > 5) {
+                    this.value = this.value.replace(/(\d{5})(\d+)/, '$1 $2');
+                }
+            });
         });
     });
-
-    // Postcode formatting
-    document.getElementById('applicant_postcode').addEventListener('input', function(e) {
-        const cursorPos = this.selectionStart;
-        let rawValue = this.value.replace(/[^a-z0-9\s]/gi, '');
-        
-        let formattedValue = rawValue.length > 8 
-            ? rawValue.substring(0, 8) 
-            : rawValue;
-        
-        this.value = formattedValue.toUpperCase();
-        
-        const newCursorPos = Math.min(cursorPos, this.value.length);
-        this.setSelectionRange(newCursorPos, newCursorPos);
-    });
-
-    // Phone number formatting
-    ['applicant_phone', 'applicant_landline'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9+]/g, '');
-            if (this.value.startsWith('+')) return;
-            if (this.value.length > 5) {
-                this.value = this.value.replace(/(\d{5})(\d+)/, '$1 $2');
-            }
-        });
-    });
-});
 
 </script>
+@endsection
+@section('script-bottom')
+@vite(['resources/js/components/form-fileupload.js'])
 @endsection
