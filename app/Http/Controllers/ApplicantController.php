@@ -41,48 +41,122 @@ class ApplicantController extends Controller
      */
     public function getApplicants(Request $request)
     {
+        $statusFilter = $request->input('status_filter', ''); // Default is empty (no filter)
+
         $model = Applicant::query()->with(['jobTitle', 'jobCategory', 'jobSource']);
 
-        return DataTables::eloquent($model)
-            ->addColumn('checkbox', function ($applicant) {
-                return '<input type="checkbox" class="row-checkbox" value="' . $applicant->id . '">';
-            })
-            ->addColumn('cv_link', function ($applicant) {
-                return $applicant->applicant_cv
-                    ? '<a href="' . asset($applicant->applicant_cv) . '" target="_blank">View CV</a>'
-                    : '-';
-            })
-            ->addColumn('applicant_name', function ($applicant) {
-                return $applicant->formatted_applicant_name; // Using accessor
-            })
-            ->addColumn('postcode', function ($applicant) {
-                return $applicant->formatted_postcode; // Using accessor
-            })
-            ->addColumn('phone', function ($applicant) {
-                return $applicant->formatted_phone; // Using accessor
-            })
-            ->addColumn('cv_link', function ($applicant) {
-                return $applicant->formatted_cv; // Using accessor
-            })
-            ->addColumn('created_at', function ($applicant) {
-                return $applicant->formatted_created_at; // Using accessor
-            })
-            ->addColumn('updated_at', function ($applicant) {
-                return $applicant->formatted_updated_at; // Using accessor
-            })
-            ->addColumn('updated_cv_link', function ($applicant) {
-                return $applicant->updated_cv
-                    ? '<a href="' . asset($applicant->updated_cv) . '" target="_blank">View Updated CV</a>'
-                    : '-';
-            })
-            ->addColumn('status', function ($applicant) {
-                return $applicant->is_blocked
-                    ? '<span class="badge bg-secondary">Blocked</span>'
-                    : '<span class="badge bg-success">Active</span>';
-            })
-            ->rawColumns(['checkbox', 'cv_link', 'updated_cv_link'])
-            ->toJson();
+        // If there's a search query, apply it dynamically across all searchable columns
+        // if ($search = $request->input('search.value')) {
+        //     $model->where(function ($query) use ($search) {
+        //         $query->where('applicants.applicant_name', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_email', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_phone', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_landline', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_postcode', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_experience', 'like', "%$search%")
+        //             // Instead of matching IDs directly, check by their names or any other field
+        //             ->orWhereHas('jobTitle', function ($query) use ($search) {
+        //                 $query->where('name', 'like', "%$search%");
+        //             })
+        //             ->orWhereHas('jobCategory', function ($query) use ($search) {
+        //                 $query->where('name', 'like', "%$search%");
+        //             })
+        //             ->orWhereHas('jobSource', function ($query) use ($search) {
+        //                 $query->where('name', 'like', "%$search%");
+        //             })
+        //             ->orWhere('applicants.status', 'like', "%$search%");
+        //     });
+        // }
+
+        // Filter by status if it's not empty
+        if ($statusFilter == 'active') {
+            $model->where('status', 1);
+        } elseif ($statusFilter == 'inactive') {
+            $model->where('status', 0);
+        } elseif ($statusFilter == 'blocked') {
+            $model->where('is_blocked', true);
+        }
+
+        if ($request->ajax()) {
+            return DataTables::eloquent($model)
+                ->addIndexColumn() // This will automatically add a serial number to the rows
+                ->addColumn('job_title', function ($applicant) {
+                    return $applicant->jobTitle ? $applicant->jobTitle->name : '-';
+                })
+                ->addColumn('job_category', function ($applicant) {
+                    return $applicant->jobCategory ? $applicant->jobCategory->name : '-';
+                })
+                ->addColumn('job_source', function ($applicant) {
+                    return $applicant->jobSource ? $applicant->jobSource->name : '-';
+                })
+                ->addColumn('applicant_name', function ($applicant) {
+                    return $applicant->formatted_applicant_name; // Using accessor
+                })
+                ->addColumn('applicant_postcode', function ($applicant) {
+                    return $applicant->formatted_postcode; // Using accessor
+                })
+                ->addColumn('applicant_notes', function ($applicant) {
+                    $notes = htmlspecialchars($applicant->applicant_notes, ENT_QUOTES, 'UTF-8');
+                    $name = htmlspecialchars($applicant->applicant_name, ENT_QUOTES, 'UTF-8');
+                    $postcode = htmlspecialchars($applicant->applicant_postcode, ENT_QUOTES, 'UTF-8');
+
+                    // Tooltip content with additional data-bs-placement and title
+                    return '<a href="#" title="View Note" onclick="showNotesModal(\'' . $notes . '\', \'' . $name . '\', \'' . $postcode . '\')">
+                                <iconify-icon icon="solar:eye-scan-bold" class="text-primary fs-24"></iconify-icon>
+                            </a>
+                            <a href="#" title="Add Short Note" onclick="addShortNotesModal(\'' . $applicant->id . '\')">
+                                <iconify-icon icon="solar:clipboard-add-linear" class="text-warning fs-24"></iconify-icon>
+                            </a>';
+                })
+
+                ->addColumn('phone', function ($applicant) {
+                    return $applicant->formatted_phone; // Using accessor
+                })
+                ->addColumn('created_at', function ($applicant) {
+                    return $applicant->formatted_created_at; // Using accessor
+                })
+                ->addColumn('updated_at', function ($applicant) {
+                    return $applicant->formatted_updated_at; // Using accessor
+                })
+                ->addColumn('applicant_cv', function ($applicant) {
+                    return $applicant->applicant_cv
+                        ? '<a href="' . asset('storage/' . $applicant->applicant_cv) . '" title="Download CV" target="_blank">
+                        <iconify-icon icon="solar:download-square-bold" class="text-primary fs-28"></iconify-icon></a>'
+                        : '-';
+                })
+                ->addColumn('updated_cv', function ($applicant) {
+                    return $applicant->updated_cv
+                        ? '<a href="' . asset('storage' . $applicant->updated_cv) . '" title="Download CV" target="_blank">
+                        <iconify-icon icon="solar:download-square-bold" class="text-secondary fs-28"></iconify-icon></a>'
+                        : '-';
+                })
+                ->addColumn('status', function ($applicant) {
+                    return $applicant->is_blocked
+                        ? '<span class="badge bg-secondary">Blocked</span>'
+                        : '<span class="badge bg-success">Active</span>';
+                })
+                ->addColumn('action', function ($applicant) {
+                    return '<div class="btn-group dropstart">
+                                <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="' . route('applicants.edit', $applicant->id) . '">Edit</a></li>
+                                    <li><a class="dropdown-item" href="' . route('applicants.details', $applicant->id) . '">View</a></li>
+                                    <li><a class="dropdown-item" href="#">Add Note</a></li>
+                                    <li><a class="dropdown-item" href="#">Go to No Job</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#">History</a></li>
+                                    <li><a class="dropdown-item" href="#">Notes History</a></li>
+                                </ul>
+                            </div>';
+                })
+
+                ->rawColumns(['applicant_notes', 'job_title', 'applicant_cv', 'status', 'updated_cv', 'job_category', 'job_source', 'action'])
+                ->make(true);
+        }
     }
+
     public function downloadCv($id)
     {
         $applicant = Applicant::findOrFail($id);
@@ -101,6 +175,11 @@ class ApplicantController extends Controller
     }
     public function edit($id)
     {
+        // Check if the user has permission to edit the applicant
+        if (!Gate::allows('edit-applicant', $id)) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $applicant = Applicant::findOrFail($id);
         return view('applicants.edit', compact('applicant'));
     }
@@ -121,7 +200,6 @@ class ApplicantController extends Controller
         $jobSources = JobSource::all();
         $jobCategories = JobCategory::all();
         $jobTitles = JobTitle::all();
-
         return view('applicants.create', compact('jobSources', 'jobCategories', 'jobTitles'));
     }
     public function store(Request $request)

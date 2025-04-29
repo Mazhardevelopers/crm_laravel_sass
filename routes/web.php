@@ -23,16 +23,16 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('', [RoutingController::class, 'index'])->name('root');
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
-   
+
     Route::group(['prefix' => 'applicants'], function () {
         Route::get('', [ApplicantController::class, 'index'])->name('applicants.list');
         Route::get('create', [ApplicantController::class, 'create'])->name('applicants.create');
         Route::post('store', [ApplicantController::class, 'store'])->name('applicants.store');
-        Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
+        // Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
         Route::get('{id}', [ApplicantController::class, 'applicantDetails'])->name('applicants.details');
     });
-    Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('applicants.getApplicants');
+    Route::get('applicants/edit/{id}', [ApplicantController::class, 'edit'])->name('applicants.edit');
+    Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('getApplicants');
 
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
 });
-

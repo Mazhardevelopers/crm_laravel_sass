@@ -26,6 +26,8 @@
     "countup.js": "^2.3.2",
     "d3": "^7.6.1",
     "d3-selection": "^3.0.0",
+    "datatables.net": "^2.2.2",
+    "datatables.net-dt": "^2.2.2",
     "daterangepicker": "^3.1.0",
     "dayjs": "^1.11.5",
     "dragula": "^3.7.3",

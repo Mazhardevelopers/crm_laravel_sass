@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Create Applicant', 'subTitle' => 'Home'])
+@extends('layouts.vertical', ['title' => 'Edit Applicant', 'subTitle' => 'Home'])
 
 @section('css')
 @vite(['node_modules/choices.js/public/assets/styles/choices.min.css'])
@@ -238,8 +238,7 @@ $jobSources = \Horsefly\JobSource::all();
             <div class="mb-3 rounded">
                 <div class="row justify-content-end g-2">
                     <div class="col-lg-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            Save</button>
+                        <button type="submit" class="btn btn-primary w-100">Save</button>
                     </div>
                     <div class="col-lg-2">
                         <a href="{{ route('applicants.list') }}" class="btn btn-danger w-100">Cancel</a>
