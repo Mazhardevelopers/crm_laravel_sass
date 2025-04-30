@@ -142,11 +142,11 @@ $jobSources = \Horsefly\JobSource::all();
                                 <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
                                 <small class="text-info">This information helps us better understand the applicant's background.</small>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="yes" required>
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="1" required>
                                     <label class="form-check-label" for="nurse_option_yes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="no" required>
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required>
                                     <label class="form-check-label" for="nurse_option_no">No</label>
                                 </div>
                                 <div class="invalid-feedback">Please provide a nursing option</div>
@@ -357,10 +357,9 @@ $jobSources = \Horsefly\JobSource::all();
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // Show success message and redirect
+                if (data.success) { 
                     alert(data.message);
-                    // window.location.href = data.redirect;
+                    window.location.reload();
                 } else {
                     // Handle validation errors
                     submitBtn.disabled = false;

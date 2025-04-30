@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -20,7 +21,10 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->unsignedBigInteger('added_by')->nullable();
             $table->softDeletes();
-            $table->timestamps();
+            
+            // Timestamps with default values and automatic update on change
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
 
             $table->foreign('added_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('job_category_id')->references('id')->on('job_categories')->onDelete('set null'); // Changed from 'cascade'

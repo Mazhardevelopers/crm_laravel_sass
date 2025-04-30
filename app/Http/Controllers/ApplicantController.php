@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Horsefly\Applicant;
+use Horsefly\ApplicantNote;
+use Horsefly\ModuleNote;
 use Horsefly\JobSource;
 use Horsefly\JobCategory;
 use Horsefly\JobTitle;
@@ -16,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+
 
 class ApplicantController extends Controller
 {
@@ -33,168 +37,6 @@ class ApplicantController extends Controller
         return view('applicants.list');
     }
 
-    /**
-     * Display the specified applicant.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function getApplicants(Request $request)
-    {
-        $statusFilter = $request->input('status_filter', ''); // Default is empty (no filter)
-
-        $model = Applicant::query()->with(['jobTitle', 'jobCategory', 'jobSource']);
-
-        // If there's a search query, apply it dynamically across all searchable columns
-        // if ($search = $request->input('search.value')) {
-        //     $model->where(function ($query) use ($search) {
-        //         $query->where('applicants.applicant_name', 'like', "%$search%")
-        //             ->orWhere('applicants.applicant_email', 'like', "%$search%")
-        //             ->orWhere('applicants.applicant_phone', 'like', "%$search%")
-        //             ->orWhere('applicants.applicant_landline', 'like', "%$search%")
-        //             ->orWhere('applicants.applicant_postcode', 'like', "%$search%")
-        //             ->orWhere('applicants.applicant_experience', 'like', "%$search%")
-        //             // Instead of matching IDs directly, check by their names or any other field
-        //             ->orWhereHas('jobTitle', function ($query) use ($search) {
-        //                 $query->where('name', 'like', "%$search%");
-        //             })
-        //             ->orWhereHas('jobCategory', function ($query) use ($search) {
-        //                 $query->where('name', 'like', "%$search%");
-        //             })
-        //             ->orWhereHas('jobSource', function ($query) use ($search) {
-        //                 $query->where('name', 'like', "%$search%");
-        //             })
-        //             ->orWhere('applicants.status', 'like', "%$search%");
-        //     });
-        // }
-
-        // Filter by status if it's not empty
-        if ($statusFilter == 'active') {
-            $model->where('status', 1);
-        } elseif ($statusFilter == 'inactive') {
-            $model->where('status', 0);
-        } elseif ($statusFilter == 'blocked') {
-            $model->where('is_blocked', true);
-        }
-
-        if ($request->ajax()) {
-            return DataTables::eloquent($model)
-                ->addIndexColumn() // This will automatically add a serial number to the rows
-                ->addColumn('job_title', function ($applicant) {
-                    return $applicant->jobTitle ? $applicant->jobTitle->name : '-';
-                })
-                ->addColumn('job_category', function ($applicant) {
-                    return $applicant->jobCategory ? $applicant->jobCategory->name : '-';
-                })
-                ->addColumn('job_source', function ($applicant) {
-                    return $applicant->jobSource ? $applicant->jobSource->name : '-';
-                })
-                ->addColumn('applicant_name', function ($applicant) {
-                    return $applicant->formatted_applicant_name; // Using accessor
-                })
-                ->addColumn('applicant_postcode', function ($applicant) {
-                    return $applicant->formatted_postcode; // Using accessor
-                })
-                ->addColumn('applicant_notes', function ($applicant) {
-                    $notes = htmlspecialchars($applicant->applicant_notes, ENT_QUOTES, 'UTF-8');
-                    $name = htmlspecialchars($applicant->applicant_name, ENT_QUOTES, 'UTF-8');
-                    $postcode = htmlspecialchars($applicant->applicant_postcode, ENT_QUOTES, 'UTF-8');
-
-                    // Tooltip content with additional data-bs-placement and title
-                    return '<a href="#" title="View Note" onclick="showNotesModal(\'' . $notes . '\', \'' . $name . '\', \'' . $postcode . '\')">
-                                <iconify-icon icon="solar:eye-scan-bold" class="text-primary fs-24"></iconify-icon>
-                            </a>
-                            <a href="#" title="Add Short Note" onclick="addShortNotesModal(\'' . $applicant->id . '\')">
-                                <iconify-icon icon="solar:clipboard-add-linear" class="text-warning fs-24"></iconify-icon>
-                            </a>';
-                })
-
-                ->addColumn('phone', function ($applicant) {
-                    return $applicant->formatted_phone; // Using accessor
-                })
-                ->addColumn('created_at', function ($applicant) {
-                    return $applicant->formatted_created_at; // Using accessor
-                })
-                ->addColumn('updated_at', function ($applicant) {
-                    return $applicant->formatted_updated_at; // Using accessor
-                })
-                ->addColumn('applicant_cv', function ($applicant) {
-                    return $applicant->applicant_cv
-                        ? '<a href="' . asset('storage/' . $applicant->applicant_cv) . '" title="Download CV" target="_blank">
-                        <iconify-icon icon="solar:download-square-bold" class="text-primary fs-28"></iconify-icon></a>'
-                        : '-';
-                })
-                ->addColumn('updated_cv', function ($applicant) {
-                    return $applicant->updated_cv
-                        ? '<a href="' . asset('storage' . $applicant->updated_cv) . '" title="Download CV" target="_blank">
-                        <iconify-icon icon="solar:download-square-bold" class="text-secondary fs-28"></iconify-icon></a>'
-                        : '-';
-                })
-                ->addColumn('status', function ($applicant) {
-                    return $applicant->is_blocked
-                        ? '<span class="badge bg-secondary">Blocked</span>'
-                        : '<span class="badge bg-success">Active</span>';
-                })
-                ->addColumn('action', function ($applicant) {
-                    return '<div class="btn-group dropstart">
-                                <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="' . route('applicants.edit', $applicant->id) . '">Edit</a></li>
-                                    <li><a class="dropdown-item" href="' . route('applicants.details', $applicant->id) . '">View</a></li>
-                                    <li><a class="dropdown-item" href="#">Add Note</a></li>
-                                    <li><a class="dropdown-item" href="#">Go to No Job</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#">History</a></li>
-                                    <li><a class="dropdown-item" href="#">Notes History</a></li>
-                                </ul>
-                            </div>';
-                })
-
-                ->rawColumns(['applicant_notes', 'job_title', 'applicant_cv', 'status', 'updated_cv', 'job_category', 'job_source', 'action'])
-                ->make(true);
-        }
-    }
-
-    public function downloadCv($id)
-    {
-        $applicant = Applicant::findOrFail($id);
-        $filePath = $applicant->cv_path;
-
-        if (Storage::exists($filePath)) {
-            return Storage::download($filePath);
-        } else {
-            return response()->json(['error' => 'File not found'], 404);
-        }
-    }
-    public function applicantDetails($id)
-    {
-        $applicant = Applicant::findOrFail($id);
-        return view('applicants.details', compact('applicant'));
-    }
-    public function edit($id)
-    {
-        // Check if the user has permission to edit the applicant
-        if (!Gate::allows('edit-applicant', $id)) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $applicant = Applicant::findOrFail($id);
-        return view('applicants.edit', compact('applicant'));
-    }
-    public function update(Request $request, $id)
-    {
-        $applicant = Applicant::findOrFail($id);
-        $applicant->update($request->all());
-        return redirect()->route('applicants.list')->with('success', 'Applicant updated successfully');
-    }
-    public function destroy($id)
-    {
-        $applicant = Applicant::findOrFail($id);
-        $applicant->delete();
-        return redirect()->route('applicants.list')->with('success', 'Applicant deleted successfully');
-    }
     public function create()
     {
         $jobSources = JobSource::all();
@@ -202,6 +44,7 @@ class ApplicantController extends Controller
         $jobTitles = JobTitle::all();
         return view('applicants.create', compact('jobSources', 'jobCategories', 'jobTitles'));
     }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -218,9 +61,13 @@ class ApplicantController extends Controller
             'applicant_landline' => 'nullable|string|max:20',
             'applicant_experience' => 'nullable|string|max:255',
             'applicant_notes' => 'required|string|max:255',
-            'have_nursing_home_experience' => 'nullable|boolean',
             'applicant_cv' => 'nullable|mimes:docx,doc,csv,pdf|max:5000',
         ]);
+
+        $validator->sometimes('have_nursing_home_experience', 'required|boolean', function ($input) {
+            $nurseCategory = JobCategory::where('name', 'nurse')->first();
+            return $nurseCategory && $input->job_category_id == $nurseCategory->id;
+        });
 
         if ($validator->fails()) {
             return response()->json([
@@ -303,6 +150,251 @@ class ApplicantController extends Controller
             ], 500);
         }
     }
+
+    public function getApplicants(Request $request)
+    {
+        $statusFilter = $request->input('status_filter', ''); // Default is empty (no filter)
+
+        $model = Applicant::query()->with(['jobTitle', 'jobCategory', 'jobSource']);
+
+        // If there's a search query, apply it dynamically across all searchable columns
+        // if ($search = $request->input('search.value')) {
+        //     $model->where(function ($query) use ($search) {
+        //         $query->where('applicants.applicant_name', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_email', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_phone', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_landline', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_postcode', 'like', "%$search%")
+        //             ->orWhere('applicants.applicant_experience', 'like', "%$search%")
+        //             // Instead of matching IDs directly, check by their names or any other field
+        //             ->orWhereHas('jobTitle', function ($query) use ($search) {
+        //                 $query->where('name', 'like', "%$search%");
+        //             })
+        //             ->orWhereHas('jobCategory', function ($query) use ($search) {
+        //                 $query->where('name', 'like', "%$search%");
+        //             })
+        //             ->orWhereHas('jobSource', function ($query) use ($search) {
+        //                 $query->where('name', 'like', "%$search%");
+        //             })
+        //             ->orWhere('applicants.status', 'like', "%$search%");
+        //     });
+        // }
+
+        // Filter by status if it's not empty
+        if ($statusFilter == 'active') {
+            $model->where('status', 1);
+        } elseif ($statusFilter == 'inactive') {
+            $model->where('status', 0);
+        } elseif ($statusFilter == 'blocked') {
+            $model->where('is_blocked', true);
+        }
+
+        if ($request->ajax()) {
+            return DataTables::eloquent($model)
+                ->addIndexColumn() // This will automatically add a serial number to the rows
+                ->addColumn('job_title', function ($applicant) {
+                    return $applicant->jobTitle ? $applicant->jobTitle->name : '-';
+                })
+                ->addColumn('job_category', function ($applicant) {
+                    return $applicant->jobCategory ? $applicant->jobCategory->name : '-';
+                })
+                ->addColumn('job_source', function ($applicant) {
+                    return $applicant->jobSource ? $applicant->jobSource->name : '-';
+                })
+                ->addColumn('applicant_name', function ($applicant) {
+                    return $applicant->formatted_applicant_name; // Using accessor
+                })
+                ->addColumn('applicant_postcode', function ($applicant) {
+                    return $applicant->formatted_postcode; // Using accessor
+                })
+                ->addColumn('applicant_notes', function ($applicant) {
+                    $notes = htmlspecialchars($applicant->applicant_notes, ENT_QUOTES, 'UTF-8');
+                    $name = htmlspecialchars($applicant->applicant_name, ENT_QUOTES, 'UTF-8');
+                    $postcode = htmlspecialchars($applicant->applicant_postcode, ENT_QUOTES, 'UTF-8');
+
+                    // Tooltip content with additional data-bs-placement and title
+                    return '<a href="#" title="View Note" onclick="showNotesModal(\'' . $notes . '\', \'' . $name . '\', \'' . $postcode . '\')">
+                                <iconify-icon icon="solar:eye-scan-bold" class="text-primary fs-24"></iconify-icon>
+                            </a>
+                            <a href="#" title="Add Short Note" onclick="addShortNotesModal(\'' . $applicant->id . '\')">
+                                <iconify-icon icon="solar:clipboard-add-linear" class="text-warning fs-24"></iconify-icon>
+                            </a>';
+                })
+                ->addColumn('applicant_phone', function ($applicant) {
+                    return $applicant->formatted_phone; // Using accessor
+                })
+                ->addColumn('applicant_landline', function ($applicant) {
+                    return $applicant->formatted_landline; // Using accessor
+                })
+                ->addColumn('created_at', function ($applicant) {
+                    return $applicant->formatted_created_at; // Using accessor
+                })
+                ->addColumn('updated_at', function ($applicant) {
+                    return $applicant->formatted_updated_at; // Using accessor
+                })
+                ->addColumn('resume', function ($applicant) {
+                    $applicant_cv = $applicant->applicant_cv
+                        ? '<a href="' . asset('storage/' . $applicant->applicant_cv) . '" title="Download CV" target="_blank">
+                        <iconify-icon icon="solar:download-square-bold" class="text-success fs-28"></iconify-icon></a>'
+                        : '<iconify-icon icon="solar:download-square-bold" class="text-light-grey fs-28"></iconify-icon>';
+
+                    $updated_cv = $applicant->updated_cv
+                        ? '<a href="' . asset('storage' . $applicant->updated_cv) . '" title="Download CV" target="_blank">
+                        <iconify-icon icon="solar:download-square-bold" class="text-primary fs-28"></iconify-icon></a>'
+                        : '<iconify-icon icon="solar:download-square-bold" class="text-grey fs-28"></iconify-icon>';
+
+                    return $applicant_cv . ' ' . $updated_cv;
+                })
+                ->addColumn('status', function ($applicant) {
+                    return $applicant->is_blocked
+                        ? '<span class="badge bg-dark">Blocked</span>'
+                        : '<span class="badge bg-success">Active</span>';
+                })
+                ->addColumn('action', function ($applicant) {
+                    return '<div class="btn-group dropstart">
+                                <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="' . route('applicants.edit', ['id' => $applicant->id]) . '">Edit</a></li>
+                                    <li><a class="dropdown-item" href="' . route('applicants.details', ['id' => $applicant->id]) . '">View</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="addNoteModal(' . $applicant->id . ')">Add Note</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $applicant->id . ')">Go to No Job</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewHistory(' . $applicant->id . ')">History</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewNotesHistory(' . $applicant->id . ')">Notes History</a></li>
+                                </ul>
+                            </div>';
+                })
+
+                ->rawColumns(['applicant_notes', 'applicant_landline', 'applicant_phone', 'job_title', 'resume', 'status', 'job_category', 'job_source', 'action'])
+                ->make(true);
+        }
+    }
+
+    public function storeShortNotes(Request $request)
+    {
+        $user = Auth::user();
+
+        $applicant_id = $request->input('applicant_id');
+        $details = $request->input('details');
+        $notes_reason = $request->input('reason');
+        $applicant_notes = $details . ' --- By: ' . $user->name . ' Date: ' . now()->format('d-m-Y');
+
+        $updateData = ['applicant_notes' => $applicant_notes];
+
+        switch ($notes_reason) {
+            case 'blocked': // Block applicants
+                Applicant::where('id', $applicant_id)
+                    ->update(array_merge($updateData, [
+                        'is_no_response' => false,
+                        'is_blocked' => true
+                    ]));
+                break;
+
+            case 'casual': // Casual notes
+                Applicant::where('id', $applicant_id)
+                    ->update(array_merge($updateData, [
+                        'is_no_response' => false,
+                        'is_blocked' => false,
+                    ]));
+                break;
+
+            case 'no_response': // No response
+                Applicant::where('id', $applicant_id)
+                    ->update(array_merge($updateData, [
+                        'is_circuit_busy' => false,
+                        'is_no_response' => true,
+                        'is_blocked' => false,
+                    ]));
+                break;
+
+            case 'no_job': // No job applicants
+                Applicant::where('id', $applicant_id)
+                    ->update(array_merge($updateData, [
+                        'is_no_response' => false,
+                        'is_blocked' => false,
+                        'is_no_job' => true,
+                    ]));
+                break;
+
+            case 'circuit_busy': // Circuit busy
+                Applicant::where('id', $applicant_id)
+                    ->update(array_merge($updateData, [
+                        'is_no_response' => false,
+                        'is_circuit_busy' => true,
+                        'is_blocked' => false,
+                        'is_no_job' => false,
+                    ]));
+                break;
+        }
+
+        // Disable previous module note
+        ModuleNote::where([
+            'module_noteable_id' => $applicant_id,
+            'module_noteable_type' => 'Horsefly\Applicant'
+        ])
+            ->orderBy('id', 'desc')
+            ->update(['status' => 0]);
+
+        // Create new module note
+        $moduleNote = ModuleNote::create([
+            'details' => $applicant_notes,
+            'module_noteable_id' => $applicant_id,
+            'module_noteable_type' => 'Horsefly\Applicant',
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+
+        $moduleNote_uid = md5($moduleNote->id);
+        $moduleNote->update(['module_note_uid' => $moduleNote_uid]);
+
+        return redirect()->to(url()->previous());
+    }
+
+    public function downloadCv($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        $filePath = $applicant->cv_path;
+
+        if (Storage::exists($filePath)) {
+            return Storage::download($filePath);
+        } else {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+    }
+    public function applicantDetails($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        return view('applicants.details', compact('applicant'));
+    }
+    public function edit($id)
+    {
+        // Debug the incoming id
+        Log::info('Trying to edit applicant with ID: ' . $id);
+        
+        $applicant = Applicant::find($id);
+        
+        // Check if the applicant is found
+        if (!$applicant) {
+            Log::info('Applicant not found with ID: ' . $id);
+        }
+    
+        return view('applicants.edit', compact('applicant'));
+    }    
+    public function update(Request $request, $id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        $applicant->update($request->all());
+        return redirect()->route('applicants.list')->with('success', 'Applicant updated successfully');
+    }
+    public function destroy($id)
+    {
+        $applicant = Applicant::findOrFail($id);
+        $applicant->delete();
+        return redirect()->route('applicants.list')->with('success', 'Applicant deleted successfully');
+    }
+
     public function show($id)
     {
         $applicant = Applicant::findOrFail($id);

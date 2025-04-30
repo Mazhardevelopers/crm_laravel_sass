@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class CreateApplicantsTable extends Migration
 {
@@ -62,13 +63,29 @@ class CreateApplicantsTable extends Migration
             $table->timestamp('paid_timestamp')->nullable();
             
             $table->softDeletes();
-            $table->timestamps();
+            
+            // Timestamps with default values and automatic update on change
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
 
             // Foreign keys
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
             $table->foreign('job_source_id')->references('id')->on('job_sources')->onDelete('set null');
             $table->foreign('job_title_id')->references('id')->on('job_titles')->onDelete('set null');
             $table->foreign('job_category_id')->references('id')->on('job_categories')->onDelete('set null');
+        });
+
+        // Add index for the polymorphic relationship
+        Schema::table('applicants', function (Blueprint $table) {
+            $table->index([
+                'applicant_name',
+                'applicant_email',
+                'applicant_postcode',
+                'job_source_id',
+                'job_category_id',
+                'job_title_id',
+                'user_id',
+            ]);
         });
     }
 

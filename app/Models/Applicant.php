@@ -151,7 +151,11 @@ class Applicant extends Model
     }
     public function getFormattedPhoneAttribute()
     {
-        return $this->is_blocked ? "<span class='badge badge-secondary'>Blocked</span>" : $this->applicant_phone;
+        return $this->is_blocked ? "<span class='badge bg-dark'>Blocked</span>" : $this->applicant_phone;
+    }
+    public function getFormattedLandlineAttribute()
+    {
+        return $this->is_blocked ? "<span class='badge bg-dark'>Blocked</span>" : $this->applicant_landline;
     }
     public function getFormattedCvAttribute()
     {

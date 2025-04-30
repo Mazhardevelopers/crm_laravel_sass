@@ -28,11 +28,12 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
         Route::get('', [ApplicantController::class, 'index'])->name('applicants.list');
         Route::get('create', [ApplicantController::class, 'create'])->name('applicants.create');
         Route::post('store', [ApplicantController::class, 'store'])->name('applicants.store');
-        // Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
+        Route::get('edit', [ApplicantController::class, 'edit'])->name('applicants.edit');
+        Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
         Route::get('{id}', [ApplicantController::class, 'applicantDetails'])->name('applicants.details');
     });
-    Route::get('applicants/edit/{id}', [ApplicantController::class, 'edit'])->name('applicants.edit');
     Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('getApplicants');
-
+    Route::post('storeShortNotes', [ApplicantController::class, 'storeShortNotes'])->name('storeShortNotes');
+    
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
 });
