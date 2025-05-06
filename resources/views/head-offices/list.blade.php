@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Applicant List', 'subTitle' => 'Home'])
+@extends('layouts.vertical', ['title' => 'Head Office List', 'subTitle' => 'Home'])
 @section('style')
 <style>
     .dropdown-toggle::after {
@@ -27,7 +27,6 @@
                                     <a class="dropdown-item" href="#">All</a>
                                     <a class="dropdown-item" href="#">Active</a>
                                     <a class="dropdown-item" href="#">Inactive</a>
-                                    <a class="dropdown-item" href="#">Blocked</a>
                                 </div>
                             </div>
                             <!-- Button Dropdown -->
@@ -43,7 +42,7 @@
                             <button type="button" class="btn btn-outline-primary me-1 my-1" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Import CSV">
                                 <i class="ri-upload-line"></i>
                             </button>
-                            <a href="{{ route('applicants.create') }}"><button type="button" class="btn btn-success ml-1 my-1"><i class="ri-add-line"></i> Create Applicant</button></a>
+                            <a href="{{ route('head-offices.create') }}"><button type="button" class="btn btn-success ml-1 my-1"><i class="ri-add-line"></i> Create Head Office</button></a>
                         </div>
                     </div><!-- end col-->
                 </div>
@@ -57,21 +56,14 @@
         <div class="card">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table id="applicants_table" class="table align-middle mb-3">
+                    <table id="headOffice_table" class="table align-middle mb-3">
                         <thead class="bg-light-subtle">
                             <tr>
                                 <th>#</th>
                                 <th>Date</th>
                                 <th>Name</th>
-                                <th>Email</th>
-                                <th>Title</th>
-                                <th>Category</th>
                                 <th>PostCode</th>
-                                <th>Phone</th>
-                                <th>Landline</th>
-                                <th>Resume</th>
-                                <th>Experience</th>
-                                <th>Source</th>
+                                <th>Website</th>
                                 <th>Notes</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -117,14 +109,14 @@
             </td>`;
 
             // Append the loader row to the table's tbody
-            $('#applicants_table tbody').append(loadingRow);
+            $('#headOffice_table tbody').append(loadingRow);
 
             // Initialize DataTable with server-side processing
-            var table = $('#applicants_table').DataTable({
+            var table = $('#headOffice_table').DataTable({
                 processing: false,  // Disable default processing state
                 serverSide: true,  // Enables server-side processing
                 ajax: {
-                    url: @json(route('getApplicants')),  // Fetch data from the backend
+                    url: @json(route('getHeadOffices')),  // Fetch data from the backend
                     type: 'GET',
                     data: function(d) {
                         // Add the current filter to the request parameters
@@ -133,20 +125,13 @@
                 },
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'created_at', name: 'applicants.created_at' },
-                    { data: 'applicant_name', name: 'applicants.applicant_name' },
-                    { data: 'applicant_email', name: 'applicants.applicant_email' },
-                    { data: 'job_title', name: 'job_title' },
-                    { data: 'job_category', name: 'job_category' },
-                    { data: 'applicant_postcode', name: 'applicants.applicant_postcode' },
-                    { data: 'applicant_phone', name: 'applicants.applicant_phone' },
-                    { data: 'applicant_landline', name: 'applicants.applicant_landline' },
-                    { data: 'resume', name:'applicants.resume', orderable: false, searchable: false },
-                    { data: 'applicant_experience', name: 'applicants.applicant_experience' },
-                    { data: 'job_source', name: 'job_source' },
-                    { data: 'applicant_notes', name: 'applicants.applicant_notes' },
-                    { data: 'status', name: 'applicants.status' },
-                    { data: 'action', name: 'action' }
+                    { data: 'created_at', name: 'created_at' },
+                    { data: 'office_name', name: 'office_name' },
+                    { data: 'office_postcode', name: 'office_postcode' },
+                    { data: 'office_website', name: 'office_website' },
+                    { data: 'office_notes', name: 'office_notes' },
+                    { data: 'status', name: 'status' },
+                    { data: 'action', name: 'action', orderable: false }
                 ],
                 rowId: function(data) {
                     return 'row_' + data.id; // Assign a unique ID to each row using the 'id' field from the data
@@ -165,7 +150,7 @@
 
                     // Check if there are no records
                     if (pageInfo.recordsTotal === 0) {
-                        $('#applicants_table tbody').html('<tr><td colspan="14" class="text-center">Data not found</td></tr>');
+                        $('#headOffice_table tbody').html('<tr><td colspan="14" class="text-center">Data not found</td></tr>');
                     } else {
                         // Build the custom pagination structure
                         var paginationHtml = `
@@ -210,7 +195,7 @@
 
         // Function to move the page forward or backward
         function movePage(page) {
-            var table = $('#applicants_table').DataTable();
+            var table = $('#headOffice_table').DataTable();
             var currentPage = table.page.info().page + 1;
             var totalPages = table.page.info().pages;
 
@@ -227,7 +212,7 @@
         function showNotesModal(notes, applicantName, applicantPostcode) {
             // Set the notes content in the modal with proper line breaks using HTML
             $('#showNotesModal .modal-body').html(
-                'Applicant Name: <strong>' + applicantName + '</strong><br>' +
+                'Head Office Name: <strong>' + applicantName + '</strong><br>' +
                 'Postcode: <strong>' + applicantPostcode + '</strong><br>' +
                 'Notes Detail: <p>' + notes + '</p>'
             );
@@ -264,7 +249,7 @@
             if ($('#shortNotesModal').length === 0) {
                 $('body').append(
                     '<div class="modal fade" id="shortNotesModal" tabindex="-1" aria-labelledby="shortNotesModalLabel" aria-hidden="true">' +
-                        '<div class="modal-dialog modal-lg modal-dialog-top">' +
+                        '<div class="modal-dialog modal-lg modal-dialog-centered">' +
                             '<div class="modal-content">' +
                                 '<div class="modal-header">' +
                                     '<h5 class="modal-title" id="shortNotesModalLabel">Add Notes</h5>' +
@@ -346,7 +331,7 @@
 
                 // Send the data via AJAX
                 $.ajax({
-                    url: '{{ route("storeShortNotes") }}', // Replace with your endpoint
+                    url: '{{ route("storeHeadOfficeShortNotes") }}', // Replace with your endpoint
                     type: 'POST',
                     data: {
                         applicant_id: applicantID,
@@ -364,78 +349,6 @@
                         $('#reasonDropdown').next('.invalid-feedback').remove(); // Remove error message
                         
                         $('#applicants_table').DataTable().ajax.reload(); // Reload the DataTable
-                    },
-                    error: function(xhr) {
-                        alert('An error occurred while saving notes.');
-                    }
-                });
-            });
-        }
-
-        // Function to show the notes modal
-        function addNotesModal(applicantID) {
-            // Add the modal HTML to the page (only once, if not already present)
-            if ($('#notesModal').length === 0) {
-                $('body').append(
-                    '<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">' +
-                        '<div class="modal-dialog modal-lg modal-dialog-top">' +
-                            '<div class="modal-content">' +
-                                '<div class="modal-header">' +
-                                    '<h5 class="modal-title" id="notesModalLabel">Add Notes</h5>' +
-                                    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
-                                '</div>' +
-                                '<div class="modal-body">' +
-                                    '<form id="notesForm">' +
-                                        '<div class="mb-3">' +
-                                            '<label for="detailsTextarea" class="form-label">Details</label>' +
-                                            '<textarea class="form-control" id="detailsTextarea" rows="4" required></textarea>' +
-                                        '</div>' +
-                                        '<div class="mb-3">' +
-                                            '<label for="reasonDropdown" class="form-label">Reason</label>' +
-                                            '<select class="form-select" id="reasonDropdown" required>' +
-                                                '<option value="" disabled selected>Select Reason</option>' +
-                                                '<option value="casual">Casual Notes</option>' +
-                                                '<option value="blocked">Blocked</option>' +
-                                            '</select>' +
-                                        '</div>' +
-                                    '</form>' +
-                                '</div>' +
-                                '<div class="modal-footer">' +
-                                    '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
-                                    '<button type="button" class="btn btn-primary" id="saveNotesButton">Save</button>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>'
-                );
-            }
-
-            // Show the modal
-            $('#notesModal').modal('show');
-
-            // Handle the save button click
-            $('#saveNotesButton').off('click').on('click', function() {
-                const notes = $('#detailsTextarea').val();
-                const status = $('#reasonDropdown').val();
-
-                if (!notes || !status) {
-                    alert('Please fill out all fields.');
-                    return;
-                }
-
-                // Send the data via AJAX
-                $.ajax({
-                    url: '#', // Replace with your endpoint
-                    type: 'POST',
-                    data: {
-                        applicant_id: applicantID,
-                        notes: notes,
-                        status: status,
-                        _token: $('meta[name="csrf-token"]').attr('content') // CSRF token for Laravel
-                    },
-                    success: function(response) {
-                        alert('Notes saved successfully!');
-                        $('#notesModal').modal('hide'); // Close the modal
                     },
                     error: function(xhr) {
                         alert('An error occurred while saving notes.');

@@ -13,9 +13,7 @@ class ModuleNote extends Model
         'module_noteable_id',
         'module_noteable_type',
         'details',
-        'status',
-        'created_at',
-        'updated_at'
+        'status'
     ];
 
 }

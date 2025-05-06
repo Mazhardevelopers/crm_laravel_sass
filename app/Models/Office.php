@@ -1,0 +1,33 @@
+<?php
+
+namespace Horsefly;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+class Office extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'offices';
+    protected $fillable = [
+        'office_uid',
+        'user_id',
+        'office_name',
+        'office_website',
+        'office_postcode',
+        'office_notes',
+        'office_lat',
+        'office_lng',
+    ];
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+}

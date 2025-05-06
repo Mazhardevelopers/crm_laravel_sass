@@ -20,8 +20,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-
-class ApplicantController extends Controller
+class UnitController extends Controller
 {
     public function __construct()
     {
@@ -401,29 +400,8 @@ class ApplicantController extends Controller
     public function update(Request $request)
     {
         $id = $request->input('applicant_id');
-        $user = Auth::user();
         $applicant = Applicant::findOrFail($id);
         $applicant->update($request->all());
-
-         // Disable previous module note
-         ModuleNote::where([
-            'module_noteable_id' => $id,
-            'module_noteable_type' => 'Horsefly\Applicant'
-        ])
-            ->orderBy('id', 'desc')
-            ->update(['status' => 0]);
-
-        // Create new module note
-        $moduleNote = ModuleNote::create([
-            'details' => $request->input('applicant_notes'),
-            'module_noteable_id' => $id,
-            'module_noteable_type' => 'Horsefly\Applicant',
-            'user_id' => $user->id,
-            'status' => 1,
-        ]);
-
-        $moduleNote_uid = md5($moduleNote->id);
-        $moduleNote->update(['module_note_uid' => $moduleNote_uid]);
 
         return redirect()->route('applicants.list')->with('success', 'Applicant updated successfully');
     }

@@ -17,6 +17,7 @@ class Applicant extends Model
         'job_source_id',
         'job_category_id',
         'job_title_id',
+        'job_type',
         'applicant_name',
         'applicant_email',
         'applicant_email_secondary',
@@ -132,7 +133,6 @@ class Applicant extends Model
 
         return $query;
     }
-
     public function scopeStatusWise($query, $status)
     {
         return $query->where('status', $status);

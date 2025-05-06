@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Create Applicant', 'subTitle' => 'Home'])
+@extends('layouts.vertical', ['title' => 'Edit Applicant', 'subTitle' => 'Home'])
 
 @section('css')
 @vite(['node_modules/choices.js/public/assets/styles/choices.min.css'])
@@ -9,11 +9,13 @@
 $jobCategories = \Horsefly\JobCategory::all();
 $jobTitles = \Horsefly\JobTitle::all();
 $jobSources = \Horsefly\JobSource::all();
-
+$applicant_id = request()->query('id');
+$applicant = \Horsefly\Applicant::find($applicant_id);
 @endphp
+
 <div class="row">
     <div class="col-xl-12 col-lg-12">
-        <form id="createApplicantForm" action="{{ route('applicants.store') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+        <form id="createApplicantForm" action="{{ route('applicants.update') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
             @csrf
             <div class="card">
                 <div class="card-header">
@@ -27,7 +29,7 @@ $jobSources = \Horsefly\JobSource::all();
                                 <select class="form-select" id="job_category" name="job_category_id" required>
                                     <option value="">Choose a Job Category</option>
                                     @foreach($jobCategories as $category)
-                                        <option value="{{ $category->id }}" {{ old('job_category_id' == $category->id ? 'selected':'') }}>{{ $category->name }}</option>
+                                        <option value="{{ $category->id }}" {{ old('job_category_id', $applicant->job_category_id == $category->id ? 'selected':'') }}>{{ $category->name }}</option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Please select a job category</div>
@@ -38,8 +40,8 @@ $jobSources = \Horsefly\JobSource::all();
                                 <label for="job_type" class="form-label">Job Type</label>
                                 <select class="form-select" id="job_type" name="job_type" required>
                                     <option value="">Choose a Job Type</option>
-                                    <option value="specialist" {{ old('job_type' == "specialist" ? 'selected':'') }}>Specialist</option>
-                                    <option value="non-specialist" {{ old('job_type' == "non-specialist" ? 'selected':'') }}>Non-Specialist</option>
+                                    <option value="specialist" {{ $applicant->job_type || $applicant->job_type == 'specialist' ? 'selected':'' }}>Specialist</option>
+                                    <option value="non-specialist" {{ $applicant->job_type || $applicant->job_type == 'non-specialist' ? 'selected':'' }}>Non Specialist</option>
                                 </select>
                                 <div class="invalid-feedback">Please select a job type</div>
                             </div>
@@ -47,10 +49,12 @@ $jobSources = \Horsefly\JobSource::all();
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="mb-3">
                                 <label for="job_title" class="form-label">Job Title</label>
-                                <select id="job_title" name="job_title_id" class="form-select">
+                                <select class="form-select" id="job_title" name="job_title_id" required>
                                     <option value="">Choose a Job Title</option>
+                                    @foreach($jobTitles as $title)
+                                        <option value="{{ $title->id }}" {{ old('job_title_id', $applicant->job_title_id == $title->id ? 'selected':'') }}>{{ $title->name }}</option>
+                                    @endforeach
                                 </select>
-                                
                                 <div class="invalid-feedback">Please select a job title</div>
                             </div>
                         </div>
@@ -60,16 +64,18 @@ $jobSources = \Horsefly\JobSource::all();
                                 <select class="form-select" id="job_source" name="job_source_id" required>
                                     <option value="">Choose a Job Source</option>
                                     @foreach($jobSources as $source)
-                                        <option value="{{ $source->id }}" {{ old('job_source_id' == $source->id ? 'selected':'') }}>{{ $source->name }}</option>
+                                        <option value="{{ $source->id }}" {{ old('job_source_id', $applicant->job_source_id == $source->id ? 'selected':'') }} >{{ $source->name }}</option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Please select a job source</div>
                             </div>
                         </div>
+                        
                         <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_name" class="form-label">Name</label>
-                                <input type="text" id="applicant_name" class="form-control" name="applicant_name" value="{{ old('applicant_name') }}" placeholder="Full Name" required>
+                                <input type="text" id="applicant_name" class="form-control" name="applicant_name" 
+                                value="{{ old('applicant_name', $applicant->applicant_name) }}" placeholder="Full Name" required>
                                 <div class="invalid-feedback">Please provide a name</div>
                             </div>
                         </div>
@@ -78,8 +84,8 @@ $jobSources = \Horsefly\JobSource::all();
                                 <label for="gender" class="form-label">Gender</label>
                                 <select class="form-select" id="gender" name="gender" required>
                                     <option value="">Choose Gender</option>
-                                    <option value="m" {{ old('gender' == 'm' ? 'selected':'') }}>Male</option>
-                                    <option value="f" {{ old('gender' == 'f' ? 'selected':'') }}>Female</option>
+                                    <option value="m" {{ old('gender', $applicant->gender == 'm' ? 'selected':'') }}>Male</option>
+                                    <option value="f" {{ old('gender', $applicant->gender == 'f' ? 'selected':'') }}>Female</option>
                                 </select>
                                 <div class="invalid-feedback">Please provide gender</div>
                             </div>
@@ -87,8 +93,8 @@ $jobSources = \Horsefly\JobSource::all();
                         <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_email_primary" class="form-label">Email <small class="text-info">(Primary)</small></label>
-                                <input type="email" id="applicant_email_primary" value="{{ old('applicant_email') }}" class="form-control" 
-                                name="applicant_email" placeholder="Enter Email" required>
+                                <input type="email" id="applicant_email_primary" class="form-control" name="applicant_email" 
+                                value="{{ old('applicant_email', $applicant->applicant_email) }}" placeholder="Enter Email" required>
                                 <div class="invalid-feedback">Please provide a valid email</div>
                             </div>
                         </div>
@@ -96,14 +102,13 @@ $jobSources = \Horsefly\JobSource::all();
                             <div class="mb-3">
                                 <label for="applicant_email_secondary" class="form-label">Email <small class="text-info">(Secondary)</small></label>
                                 <input type="email" id="applicant_email_secondary" class="form-control" name="applicant_email_secondary" 
-                                value="{{ old('applicant_email_secondary') }}" placeholder="Enter Email">
+                                value="{{ old('applicant_email_secondary', $applicant->applicant_email_secondary) }}" placeholder="Enter Email">
                             </div>
                         </div>
-                        
                         <div class="col-lg-4">
                             <div class="mb-3">
                                 <label for="applicant_postcode" class="form-label">PostCode <small class="text-info">(If postcode is not available then use current or last workplace postcode)</small></label>
-                                <input type="text" id="applicant_postcode" class="form-control" value="{{ old('applicant_postcode') }}" 
+                                <input type="text" id="applicant_postcode" class="form-control" value="{{ old('applicant_postcode', $applicant->applicant_postcode) }}" 
                                 name="applicant_postcode" placeholder="Enter PostCode" required>
                                 <div class="invalid-feedback">Please provide a postcode</div>
                             </div>
@@ -112,30 +117,32 @@ $jobSources = \Horsefly\JobSource::all();
                             <div class="mb-3">
                                 <label for="applicant_phone" class="form-label">Phone</label>
                                 <input type="tel" id="applicant_phone" class="form-control" name="applicant_phone" 
-                                value="{{ old('applicant_phone') }}" placeholder="Enter Phone Number" required>
+                                value="{{ old('applicant_phone', $applicant->applicant_phone) }}"  placeholder="Enter Phone Number" required>
                                 <div class="invalid-feedback">Please provide a phone number</div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="mb-3">
                                 <label for="applicant_landline" class="form-label">Landline</label>
-                                <input type="tel" id="applicant_landline" class="form-control" name="applicant_landline" placeholder="Enter Landline Number"
-                               value="{{ old('applicant_landline') }}">
+                                <input type="tel" id="applicant_landline" class="form-control" value="{{ old('applicant_landline', $applicant->applicant_landline) }}" name="applicant_landline" placeholder="Enter Landline Number">
                             </div>
                         </div>
                         
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_experience" class="form-label">Experience <small class="text-info">(Optional)</small></label>
-                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience">{{ old('applicant_experience') }}</textarea>
+                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience">
+                                    {{ old('applicant_experience', $applicant->applicant_experience) }}
+                                </textarea>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required>{{ old('applicant_notes') }}</textarea>
+                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required>
+                                    {{ old('applicant_notes', $applicant->applicant_notes) }}
+                                </textarea>
                                 <div class="invalid-feedback">Please provide notes</div>
-
                             </div>
                         </div>
                         <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
@@ -145,13 +152,13 @@ $jobSources = \Horsefly\JobSource::all();
                                 <small class="text-info">This information helps us better understand the applicant's background.</small>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="1" required
-                                    {{ old('have_nursing_home_experience' == '1' ? 'selected':'') }}>
-                                    
+                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '1' ? 'selected':'') }}>
                                     <label class="form-check-label" for="nurse_option_yes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required>
-                                    <label class="form-check-label" for="nurse_option_no" {{ old('have_nursing_home_experience' == '0' ? 'selected':'') }}>No</label>
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required
+                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '0' ? 'selected':'') }}>>
+                                    <label class="form-check-label" for="nurse_option_no">No</label>
                                 </div>
                                 <div class="invalid-feedback">Please provide a nursing option</div>
 
@@ -242,8 +249,7 @@ $jobSources = \Horsefly\JobSource::all();
             <div class="mb-3 rounded">
                 <div class="row justify-content-end g-2">
                     <div class="col-lg-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            Save</button>
+                        <button type="submit" class="btn btn-primary w-100">Save</button>
                     </div>
                     <div class="col-lg-2">
                         <a href="{{ route('applicants.list') }}" class="btn btn-dark w-100">Cancel</a>
@@ -273,41 +279,66 @@ $jobSources = \Horsefly\JobSource::all();
     })()
 
     document.addEventListener('DOMContentLoaded', function() {
-        const jobTitle = document.getElementById('job_title');
-        const jobCategory = document.getElementById('job_category');
-        const jobType = document.getElementById('job_type');
-
-        if (!jobTitle || !jobCategory || !jobType) {
-            console.warn("One or more elements are missing: job_title, job_category, or job_type.");
-            return;
-        }
-
-        function fetchJobTitles() {
-            // alert('Fetching job titles...');
-            const categoryId = jobCategory.value;
-            const type = jobType.value;
-
-            if (categoryId && type) {
-                fetch(`/getJobTitles?job_category_id=${categoryId}&job_type=${type}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        jobTitle.innerHTML = '<option value="">Choose a Job Title</option>';
-                        data.forEach(title => {
-                            const option = document.createElement('option');
-                            option.value = title.id;
-                            option.textContent = title.name;
-                            jobTitle.appendChild(option);
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error fetching job titles:', error);
-                        // alert('Failed to fetch job titles.');
-                    });
+        // Initialize Dropzone
+        Dropzone.autoDiscover = false;
+        const myDropzone = new Dropzone("#applicantCvDropzone", {
+            url: "/dummy-url",
+            paramName: "applicant_cv",
+            maxFiles: 1,
+            maxFilesize: 5,
+            acceptedFiles: '.docx,.doc,.csv,.pdf',
+            addRemoveLinks: true,
+            autoProcessQueue: false,
+            previewsContainer: "#dropzone-preview",
+            previewTemplate: document.querySelector('#dropzone-preview-list').innerHTML,
+            init: function() {
+                this.on("addedfile", function(file) {
+                    // Sync with regular file input when file is added to Dropzone
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    document.getElementById('applicant_cv').files = dataTransfer.files;
+                    
+                    // Hide regular input when using Dropzone
+                    document.getElementById('regularFileInput').style.display = 'none';
+                });
+                
+                this.on("removedfile", function(file) {
+                    // Clear regular input when file is removed from Dropzone
+                    document.getElementById('applicant_cv').value = '';
+                    document.getElementById('regularFileInput').style.display = 'block';
+                });
             }
-        }
+        });
 
-        jobCategory.addEventListener('change', fetchJobTitles);
-        jobType.addEventListener('change', fetchJobTitles);
+        // Toggle between upload methods
+        document.getElementById('toggleUploadMethod').addEventListener('click', function() {
+            const dropzone = document.getElementById('applicantCvDropzone');
+            const regularInput = document.getElementById('regularFileInput');
+            
+            if (dropzone.style.display === 'none') {
+                // Switch to Dropzone
+                dropzone.style.display = 'block';
+                regularInput.style.display = 'none';
+                this.textContent = 'Switch to manual file selection';
+            } else {
+                // Switch to regular input
+                dropzone.style.display = 'none';
+                regularInput.style.display = 'block';
+                this.textContent = 'Switch to drag & drop';
+                
+                // Clear any Dropzone files
+                myDropzone.removeAllFiles(true);
+            }
+        });
+
+        // Handle regular file input changes
+        document.getElementById('applicant_cv').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                // Add file to Dropzone if using regular input
+                myDropzone.removeAllFiles(true);
+                myDropzone.addFile(this.files[0]);
+            }
+        });
     });
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -336,9 +367,10 @@ $jobSources = \Horsefly\JobSource::all();
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) { 
+                if (data.success) {
+                    // Show success message and redirect
                     alert(data.message);
-                    window.location.reload();
+                    // window.location.href = data.redirect;
                 } else {
                     // Handle validation errors
                     submitBtn.disabled = false;
@@ -406,41 +438,7 @@ $jobSources = \Horsefly\JobSource::all();
                 }
             });
         });
-        
     });
-
-    // Fetch data and populate dropdown
-    function fetchDataAndPopulateDropdown(url, dropdownId) {
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            const dropdown = document.getElementById(dropdownId);
-            if (dropdown && data.success && Array.isArray(data.items)) {
-                dropdown.innerHTML = '<option value="">Choose an option</option>';
-                data.items.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.textContent = item.name;
-                    dropdown.appendChild(option);
-                });
-            } else {
-                console.error('Invalid data format or dropdown not found');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        });
-    }
-
-    
-
-
 
 </script>
 @endsection

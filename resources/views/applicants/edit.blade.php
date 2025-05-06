@@ -9,11 +9,13 @@
 $jobCategories = \Horsefly\JobCategory::all();
 $jobTitles = \Horsefly\JobTitle::all();
 $jobSources = \Horsefly\JobSource::all();
-
+$applicant_id = request()->query('id');
+$applicant = \Horsefly\Applicant::find($applicant_id);
 @endphp
+
 <div class="row">
     <div class="col-xl-12 col-lg-12">
-        <form id="createApplicantForm" action="{{ route('applicants.store') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+        <form id="createApplicantForm" action="{{ route('applicants.update') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
             @csrf
             <div class="card">
                 <div class="card-header">
@@ -27,7 +29,7 @@ $jobSources = \Horsefly\JobSource::all();
                                 <select class="form-select" id="job_category" name="job_category_id" required>
                                     <option value="">Choose a Job Category</option>
                                     @foreach($jobCategories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        <option value="{{ $category->id }}" {{ old('job_category_id', $applicant->job_category_id == $category->id ? 'selected':'') }}>{{ $category->name }}</option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Please select a job category</div>
@@ -38,8 +40,8 @@ $jobSources = \Horsefly\JobSource::all();
                                 <label for="job_type" class="form-label">Job Type</label>
                                 <select class="form-select" id="job_type" name="job_type" required>
                                     <option value="">Choose a Job Type</option>
-                                    <option value="specialist">Specialist</option>
-                                    <option value="non-specialist">Non-Specialist</option>
+                                    <option value="specialist" {{ $applicant->job_type || $applicant->job_type == 'specialist' ? 'selected':'' }}>Specialist</option>
+                                    <option value="non-specialist" {{ $applicant->job_type || $applicant->job_type == 'non-specialist' ? 'selected':'' }}>Non Specialist</option>
                                 </select>
                                 <div class="invalid-feedback">Please select a job type</div>
                             </div>
@@ -50,7 +52,7 @@ $jobSources = \Horsefly\JobSource::all();
                                 <select class="form-select" id="job_title" name="job_title_id" required>
                                     <option value="">Choose a Job Title</option>
                                     @foreach($jobTitles as $title)
-                                        <option value="{{ $title->id }}">{{ $title->name }}</option>
+                                        <option value="{{ $title->id }}" {{ old('job_title_id', $applicant->job_title_id == $title->id ? 'selected':'') }}>{{ $title->name }}</option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Please select a job title</div>
@@ -62,7 +64,7 @@ $jobSources = \Horsefly\JobSource::all();
                                 <select class="form-select" id="job_source" name="job_source_id" required>
                                     <option value="">Choose a Job Source</option>
                                     @foreach($jobSources as $source)
-                                        <option value="{{ $source->id }}">{{ $source->name }}</option>
+                                        <option value="{{ $source->id }}" {{ old('job_source_id', $applicant->job_source_id == $source->id ? 'selected':'') }} >{{ $source->name }}</option>
                                     @endforeach
                                 </select>
                                 <div class="invalid-feedback">Please select a job source</div>
@@ -72,7 +74,8 @@ $jobSources = \Horsefly\JobSource::all();
                         <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_name" class="form-label">Name</label>
-                                <input type="text" id="applicant_name" class="form-control" name="applicant_name" placeholder="Full Name" required>
+                                <input type="text" id="applicant_name" class="form-control" name="applicant_name" 
+                                value="{{ old('applicant_name', $applicant->applicant_name) }}" placeholder="Full Name" required>
                                 <div class="invalid-feedback">Please provide a name</div>
                             </div>
                         </div>
@@ -81,8 +84,8 @@ $jobSources = \Horsefly\JobSource::all();
                                 <label for="gender" class="form-label">Gender</label>
                                 <select class="form-select" id="gender" name="gender" required>
                                     <option value="">Choose Gender</option>
-                                    <option value="m">Male</option>
-                                    <option value="f">Female</option>
+                                    <option value="m" {{ old('gender', $applicant->gender == 'm' ? 'selected':'') }}>Male</option>
+                                    <option value="f" {{ old('gender', $applicant->gender == 'f' ? 'selected':'') }}>Female</option>
                                 </select>
                                 <div class="invalid-feedback">Please provide gender</div>
                             </div>
@@ -90,50 +93,52 @@ $jobSources = \Horsefly\JobSource::all();
                         <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_email_primary" class="form-label">Email <small class="text-info">(Primary)</small></label>
-                                <input type="email" id="applicant_email_primary" class="form-control" name="applicant_email" placeholder="Enter Email" required>
+                                <input type="email" id="applicant_email_primary" class="form-control" name="applicant_email" 
+                                value="{{ old('applicant_email', $applicant->applicant_email) }}" placeholder="Enter Email" required>
                                 <div class="invalid-feedback">Please provide a valid email</div>
                             </div>
                         </div>
                         <div class="col-lg-3">
                             <div class="mb-3">
                                 <label for="applicant_email_secondary" class="form-label">Email <small class="text-info">(Secondary)</small></label>
-                                <input type="email" id="applicant_email_secondary" class="form-control" name="applicant_email_secondary" placeholder="Enter Email">
+                                <input type="email" id="applicant_email_secondary" class="form-control" name="applicant_email_secondary" 
+                                value="{{ old('applicant_email_secondary', $applicant->applicant_email_secondary) }}" placeholder="Enter Email">
                             </div>
                         </div>
-                        
                         <div class="col-lg-4">
                             <div class="mb-3">
                                 <label for="applicant_postcode" class="form-label">PostCode <small class="text-info">(If postcode is not available then use current or last workplace postcode)</small></label>
-                                <input type="text" id="applicant_postcode" class="form-control" name="applicant_postcode" placeholder="Enter PostCode" required>
+                                <input type="text" id="applicant_postcode" class="form-control" value="{{ old('applicant_postcode', $applicant->applicant_postcode) }}" 
+                                name="applicant_postcode" placeholder="Enter PostCode" required>
                                 <div class="invalid-feedback">Please provide a postcode</div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="mb-3">
                                 <label for="applicant_phone" class="form-label">Phone</label>
-                                <input type="tel" id="applicant_phone" class="form-control" name="applicant_phone" placeholder="Enter Phone Number" required>
+                                <input type="tel" id="applicant_phone" class="form-control" name="applicant_phone" 
+                                value="{{ old('applicant_phone', $applicant->applicant_phone) }}"  placeholder="Enter Phone Number" required>
                                 <div class="invalid-feedback">Please provide a phone number</div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="mb-3">
                                 <label for="applicant_landline" class="form-label">Landline</label>
-                                <input type="tel" id="applicant_landline" class="form-control" name="applicant_landline" placeholder="Enter Landline Number">
+                                <input type="tel" id="applicant_landline" class="form-control" value="{{ old('applicant_landline', $applicant->applicant_landline) }}" name="applicant_landline" placeholder="Enter Landline Number">
                             </div>
                         </div>
                         
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_experience" class="form-label">Experience <small class="text-info">(Optional)</small></label>
-                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience"></textarea>
+                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience">{{ old('applicant_experience', $applicant->applicant_experience) }}</textarea>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required></textarea>
+                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required>{{ old('applicant_notes') }}</textarea>
                                 <div class="invalid-feedback">Please provide notes</div>
-
                             </div>
                         </div>
                         <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
@@ -142,11 +147,13 @@ $jobSources = \Horsefly\JobSource::all();
                                 <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
                                 <small class="text-info">This information helps us better understand the applicant's background.</small>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="yes" required>
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="1" required
+                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '1' ? 'selected':'') }}>
                                     <label class="form-check-label" for="nurse_option_yes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="no" required>
+                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required
+                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '0' ? 'selected':'') }}>>
                                     <label class="form-check-label" for="nurse_option_no">No</label>
                                 </div>
                                 <div class="invalid-feedback">Please provide a nursing option</div>
@@ -241,7 +248,7 @@ $jobSources = \Horsefly\JobSource::all();
                         <button type="submit" class="btn btn-primary w-100">Save</button>
                     </div>
                     <div class="col-lg-2">
-                        <a href="{{ route('applicants.list') }}" class="btn btn-danger w-100">Cancel</a>
+                        <a href="{{ route('applicants.list') }}" class="btn btn-dark w-100">Cancel</a>
                     </div>
                 </div>
             </div>

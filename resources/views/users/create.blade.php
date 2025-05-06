@@ -127,13 +127,17 @@ $jobSources = \Horsefly\JobSource::all();
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_experience" class="form-label">Experience <small class="text-info">(Optional)</small></label>
-                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience">{{ old('applicant_experience') }}</textarea>
+                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience">
+                                    {{ old('applicant_experience') }}
+                                </textarea>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="applicant_notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required>{{ old('applicant_notes') }}</textarea>
+                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required>
+                                    {{ old('applicant_notes') }}
+                                </textarea>
                                 <div class="invalid-feedback">Please provide notes</div>
 
                             </div>

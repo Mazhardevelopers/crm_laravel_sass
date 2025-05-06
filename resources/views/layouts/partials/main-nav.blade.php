@@ -74,10 +74,10 @@
                     <div class="collapse" id="sidebarHeadOffices">
                          <ul class="nav sub-navbar-nav">
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('second', ['agents', 'list'])}}">List View</a>
+                                   <a class="sub-nav-link" href="{{ route('head-offices.list')}}">List View</a>
                               </li>
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('second', ['agents', 'add'])}}">Add Head Office</a>
+                                   <a class="sub-nav-link" href="{{ route('head-offices.create')}}">Create Head Office</a>
                               </li>
                          </ul>
                     </div>
@@ -93,10 +93,10 @@
                     <div class="collapse" id="sidebarUnits">
                          <ul class="nav sub-navbar-nav">
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('second', ['agents', 'list'])}}">List View</a>
+                                   <a class="sub-nav-link" href="{{ route('units.list')}}">List View</a>
                               </li>
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('second', ['agents', 'add'])}}">Add Unit</a>
+                                   <a class="sub-nav-link" href="{{ route('units.create')}}">Create Unit</a>
                               </li>
                          </ul>
                     </div>
@@ -112,10 +112,10 @@
                     <div class="collapse" id="sidebarSales">
                          <ul class="nav sub-navbar-nav">
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('second', ['agents', 'list'])}}">List View</a>
+                                   <a class="sub-nav-link" href="{{ route('sales.list')}}">List View</a>
                               </li>
                               <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="{{ route('second', ['agents', 'add'])}}">Add Sale</a>
+                                   <a class="sub-nav-link" href="{{ route('sales.list')}}">Add Sale</a>
                               </li>
                          </ul>
                     </div>

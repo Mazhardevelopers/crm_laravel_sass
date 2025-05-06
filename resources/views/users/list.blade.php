@@ -43,7 +43,7 @@
                             <button type="button" class="btn btn-outline-primary me-1 my-1" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Import CSV">
                                 <i class="ri-upload-line"></i>
                             </button>
-                            <a href="{{ route('applicants.create') }}"><button type="button" class="btn btn-success ml-1 my-1"><i class="ri-add-line"></i> Create Applicant</button></a>
+                            <a href="{{ route('applicants.create') }}"><button type="button" class="btn btn-success ml-1 my-1"><i class="ri-add-line"></i> New Applicant</button></a>
                         </div>
                     </div><!-- end col-->
                 </div>
@@ -239,7 +239,7 @@
             if ($('#showNotesModal').length === 0) {
                 $('body').append(
                     '<div class="modal fade" id="showNotesModal" tabindex="-1" aria-labelledby="showNotesModalLabel" aria-hidden="true">' +
-                        '<div class="modal-dialog modal-dialog-top">' +
+                        '<div class="modal-dialog modal-dialog-centered">' +
                             '<div class="modal-content">' +
                                 '<div class="modal-header">' +
                                     '<h5 class="modal-title" id="showNotesModalLabel">Applicant Notes</h5>' +
@@ -264,7 +264,7 @@
             if ($('#shortNotesModal').length === 0) {
                 $('body').append(
                     '<div class="modal fade" id="shortNotesModal" tabindex="-1" aria-labelledby="shortNotesModalLabel" aria-hidden="true">' +
-                        '<div class="modal-dialog modal-lg modal-dialog-top">' +
+                        '<div class="modal-dialog modal-lg modal-dialog-centered">' +
                             '<div class="modal-content">' +
                                 '<div class="modal-header">' +
                                     '<h5 class="modal-title" id="shortNotesModalLabel">Add Notes</h5>' +
@@ -378,7 +378,7 @@
             if ($('#notesModal').length === 0) {
                 $('body').append(
                     '<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">' +
-                        '<div class="modal-dialog modal-lg modal-dialog-top">' +
+                        '<div class="modal-dialog modal-lg modal-dialog-centered">' +
                             '<div class="modal-content">' +
                                 '<div class="modal-header">' +
                                     '<h5 class="modal-title" id="notesModalLabel">Add Notes</h5>' +
