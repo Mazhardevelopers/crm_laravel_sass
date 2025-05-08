@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use Horsefly\User;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,9 +19,10 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'User',
-            'email' => 'demo@user.com',
+            'name' => 'admin',
+            'email' => 'admin@gmail.com',
             'email_verified_at' => now(),
+            'is_admin' => '1',
             'password' => Hash::make('password'),
             'remember_token' => Str::random(10),
         ]);

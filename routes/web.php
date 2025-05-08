@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoutingController;
+use App\Http\Controllers\Auth\LoginController;
+
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\HeadOfficeController;
 use App\Http\Controllers\UnitController;
@@ -20,9 +22,11 @@ use App\Http\Controllers\SaleController;
 
 require __DIR__ . '/auth.php';
 
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('login')->middleware('ip_address');
+Route::post('login', [LoginController::class, 'login']);
+Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 
-
-Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
+Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
     Route::get('', [RoutingController::class, 'index'])->name('root');
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
@@ -34,12 +38,11 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
         Route::get('edit', [ApplicantController::class, 'edit'])->name('applicants.edit');
         Route::post('update', [ApplicantController::class, 'update'])->name('applicants.update');
         Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
-        Route::get('{id}', [ApplicantController::class, 'applicantDetails'])->name('applicants.details');
     });
     Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('getApplicants');
     Route::get('getJobTitles', [ApplicantController::class, 'getJobTitles'])->name('getJobTitles');
     Route::post('storeShortNotes', [ApplicantController::class, 'storeShortNotes'])->name('storeShortNotes');
-    
+
     Route::group(['prefix' => 'head-offices'], function () {
         Route::get('', [HeadOfficeController::class, 'index'])->name('head-offices.list');
         Route::get('create', [HeadOfficeController::class, 'create'])->name('head-offices.create');
@@ -50,7 +53,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     });
     Route::get('getHeadOffices', [HeadOfficeController::class, 'getHeadOffices'])->name('getHeadOffices');
     Route::post('storeHeadOfficeShortNotes', [ApplicantController::class, 'storeHeadOfficeShortNotes'])->name('storeHeadOfficeShortNotes');
-    
+
     Route::group(['prefix' => 'units'], function () {
         Route::get('', [UnitController::class, 'index'])->name('units.list');
         Route::get('create', [UnitController::class, 'create'])->name('units.create');
@@ -61,7 +64,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     });
 
     Route::get('getUnits', [UnitController::class, 'getUnits'])->name('getUnits');
-    
+
     Route::group(['prefix' => 'sales'], function () {
         Route::get('', [SaleController::class, 'index'])->name('sales.list');
         Route::get('create', [SaleController::class, 'create'])->name('sales.create');
@@ -72,6 +75,6 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     });
 
     Route::get('getSales', [SaleController::class, 'getSales'])->name('getSales');
-   
+
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
 });

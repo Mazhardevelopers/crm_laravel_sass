@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Horsefly\Applicant;
+use App\Observers\ApplicantObserver;
+
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register the Applicant observer
+        Applicant::observe(ApplicantObserver::class);
     }
 }

@@ -89,6 +89,26 @@
 
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="viewApplicantModal" tabindex="-1" aria-labelledby="viewApplicantModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewApplicantModalLabel">Applicant Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Content will be dynamically loaded here -->
+          <div id="applicantDetails"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
 @section('script')
     <!-- jQuery CDN (make sure this is loaded before DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -443,6 +463,9 @@
                 });
             });
         }
+
+
+
     </script>
     
 @endsection

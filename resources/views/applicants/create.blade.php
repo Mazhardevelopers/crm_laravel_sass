@@ -138,20 +138,20 @@ $jobSources = \Horsefly\JobSource::all();
 
                             </div>
                         </div>
-                        <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
+                        <div class="col-lg-12" id="nurseToggleContainer"  {{ old('have_nursing_home_experience' == '1' ? '':'style="display: none;"') }}>
                             <div class="mb-3">
                                 <label class="form-label">Have Nursing Home Experience?</label>
                                 <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
                                 <small class="text-info">This information helps us better understand the applicant's background.</small>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="1" required
-                                    {{ old('have_nursing_home_experience' == '1' ? 'selected':'') }}>
+                                    {{ old('have_nursing_home_experience' == '1' ? 'checked':'') }}>
                                     
                                     <label class="form-check-label" for="nurse_option_yes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required>
-                                    <label class="form-check-label" for="nurse_option_no" {{ old('have_nursing_home_experience' == '0' ? 'selected':'') }}>No</label>
+                                    <label class="form-check-label" for="nurse_option_no" {{ old('have_nursing_home_experience' == '0' ? 'checked':'') }}>No</label>
                                 </div>
                                 <div class="invalid-feedback">Please provide a nursing option</div>
 

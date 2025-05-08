@@ -7,6 +7,7 @@ use Horsefly\Applicant;
 use Horsefly\ApplicantNote;
 use Horsefly\ModuleNote;
 use Horsefly\JobSource;
+use Horsefly\Audit;
 use Horsefly\JobCategory;
 use Horsefly\JobTitle;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 class ApplicantController extends Controller
 {
+
     public function __construct()
     {
         //
@@ -127,17 +129,12 @@ class ApplicantController extends Controller
 
             $applicant = Applicant::create($applicantData);
 
-            if ($request->cv_path) {
-                $applicant->update(['applicant_cv' => $request->cv_path]);
-            }
-
             // Generate UID
             $applicant->update(['applicant_uid' => md5(uniqid($applicant->id, true))]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Applicant created successfully',
-                'redirect' => route('applicants.list')
+                'message' => 'Applicant created successfully'
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating applicant: ' . $e->getMessage());
@@ -267,7 +264,7 @@ class ApplicantController extends Controller
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="' . route('applicants.edit', ['id' => $applicant->id]) . '">Edit</a></li>
-                                    <li><a class="dropdown-item" href="' . route('applicants.details', ['id' => $applicant->id]) . '">View</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="showDetailsModal(' . $applicant->id . ')">View</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="addNoteModal(' . $applicant->id . ')">Add Note</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $applicant->id . ')">Go to No Job</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $applicant->id . ')">Upload Resume</a></li>
@@ -363,6 +360,9 @@ class ApplicantController extends Controller
             'status' => 1,
         ]);
 
+        // Refresh the instance to ensure it has the latest data
+        $moduleNote->refresh();
+
         $moduleNote_uid = md5($moduleNote->id);
         $moduleNote->update(['module_note_uid' => $moduleNote_uid]);
 
@@ -378,11 +378,6 @@ class ApplicantController extends Controller
         } else {
             return response()->json(['error' => 'File not found'], 404);
         }
-    }
-    public function applicantDetails($id)
-    {
-        $applicant = Applicant::findOrFail($id);
-        return view('applicants.details', compact('applicant'));
     }
     public function edit($id)
     {
@@ -400,32 +395,105 @@ class ApplicantController extends Controller
     }
     public function update(Request $request)
     {
-        $id = $request->input('applicant_id');
-        $user = Auth::user();
-        $applicant = Applicant::findOrFail($id);
-        $applicant->update($request->all());
-
-         // Disable previous module note
-         ModuleNote::where([
-            'module_noteable_id' => $id,
-            'module_noteable_type' => 'Horsefly\Applicant'
-        ])
-            ->orderBy('id', 'desc')
-            ->update(['status' => 0]);
-
-        // Create new module note
-        $moduleNote = ModuleNote::create([
-            'details' => $request->input('applicant_notes'),
-            'module_noteable_id' => $id,
-            'module_noteable_type' => 'Horsefly\Applicant',
-            'user_id' => $user->id,
-            'status' => 1,
+        // Validate the incoming request
+        $validator = Validator::make($request->all(), [
+            'job_category_id' => 'required|exists:job_categories,id',
+            'job_type' => ['required', Rule::in(['specialist', 'non-specialist'])],
+            'job_title_id' => 'required|exists:job_titles,id',
+            'job_source_id' => 'required|exists:job_sources,id',
+            'applicant_name' => 'required|string|max:255',
+            'gender' => 'required',
+            'applicant_email' => 'required|email|max:255|unique:applicants,applicant_email,' . $request->input('applicant_id'), // Exclude current applicant's email
+            'applicant_email_secondary' => 'nullable|email|max:255',
+            'applicant_postcode' => ['required', 'string', 'max:8', 'regex:/^[A-Z0-9 ]+$/'],
+            'applicant_phone' => 'required|string|max:20',
+            'applicant_landline' => 'nullable|string|max:20',
+            'applicant_experience' => 'nullable|string|max:255',
+            'applicant_notes' => 'required|string|max:255',
+            'applicant_cv' => 'nullable|mimes:docx,doc,csv,pdf|max:5000',
         ]);
 
-        $moduleNote_uid = md5($moduleNote->id);
-        $moduleNote->update(['module_note_uid' => $moduleNote_uid]);
+        // Add conditionally required validation
+        $validator->sometimes('have_nursing_home_experience', 'required|boolean', function ($input) {
+            $nurseCategory = JobCategory::where('name', 'nurse')->first();
+            return $nurseCategory && $input->job_category_id == $nurseCategory->id;
+        });
 
-        return redirect()->route('applicants.list')->with('success', 'Applicant updated successfully');
+        // If validation fails, return with errors
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Please fix the errors in the form'
+            ], 422);
+        }
+
+        try {
+            // Prepare the data to update
+            $applicantData = $request->only([
+                'job_category_id',
+                'job_type',
+                'job_title_id',
+                'job_source_id',
+                'applicant_name',
+                'applicant_email',
+                'applicant_email_secondary',
+                'applicant_postcode',
+                'applicant_phone',
+                'applicant_landline',
+                'applicant_experience',
+                'applicant_notes',
+                'have_nursing_home_experience',
+                'gender'
+            ]);
+
+            // Store the user ID
+            $applicantData['user_id'] = Auth::id();
+
+            // Handle file upload if a CV is provided
+            $path = null;
+            if ($request->hasFile('applicant_cv')) {
+                // Get the original file name
+                $filenameWithExt = $request->file('applicant_cv')->getClientOriginalName();
+                // Get the filename without extension
+                $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                // Get file extension
+                $extension = $request->file('applicant_cv')->getClientOriginalExtension();
+                // Create a new filename with a timestamp
+                $fileNameToStore = $filename . '_' . time() . '.' . $extension;
+                // Store the file in the public/uploads directory
+                $path = $request->file('applicant_cv')->storeAs('uploads', $fileNameToStore, 'public');
+            }
+
+            // If a CV was uploaded, assign the path to the data
+            $applicantData['applicant_cv'] = $path;
+
+            // Get the applicant ID from the request
+            $id = $request->input('applicant_id');
+
+            // Retrieve the applicant record
+            $applicant = Applicant::find($id);
+
+            // If the applicant doesn't exist, throw an exception
+            if (!$applicant) {
+                throw new \Exception("Applicant not found with ID: " . $id);
+            }
+
+            // Update the applicant with the validated and formatted data
+            $applicant->update($applicantData);
+
+            // Redirect to the applicants page with a success message
+            return response()->json([
+                'success' => true,
+                'message' => 'Applicant updated successfully',
+                'redirect' => route('applicants.list')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the applicant. Please try again.'
+            ], 500);
+        }
     }
     public function destroy($id)
     {

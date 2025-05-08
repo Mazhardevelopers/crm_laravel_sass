@@ -20,7 +20,6 @@
 
                 <div class="px-4">
                     <form method="POST" action="{{ route('login') }}" class="authentication-form">
-
                         @csrf
                         @if (sizeof($errors) > 0)
                             @foreach ($errors->all() as $error)
@@ -32,7 +31,7 @@
                             <label class="form-label" for="example-email">Email</label>
                             <input type="email" id="example-email" name="email"
                                    class="form-control bg-light bg-opacity-50 border-light py-2"
-                                   placeholder="Enter your email" value="demo@user.com">
+                                   placeholder="Enter your email" value="admin@gmail.com">
                         </div>
                         <div class="mb-3">
                             {{-- <a href="{{ route('second', ['auth', 'password'])}}"

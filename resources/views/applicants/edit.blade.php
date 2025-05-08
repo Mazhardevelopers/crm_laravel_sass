@@ -15,8 +15,9 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
 
 <div class="row">
     <div class="col-xl-12 col-lg-12">
-        <form id="createApplicantForm" action="{{ route('applicants.update') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+        <form id="editApplicantForm" action="{{ route('applicants.update') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="applicant_id" value="{{ $applicant_id }}">
             <div class="card">
                 <div class="card-header">
                     <h4 class="card-title">Applicant Information</h4>
@@ -141,19 +142,19 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
                                 <div class="invalid-feedback">Please provide notes</div>
                             </div>
                         </div>
-                        <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
+                        <div class="col-lg-12" id="nurseToggleContainer" {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '1' ? '':'style="display: none;"') }}>
                             <div class="mb-3">
                                 <label class="form-label">Have Nursing Home Experience?</label>
                                 <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
                                 <small class="text-info">This information helps us better understand the applicant's background.</small>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="1" required
-                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '1' ? 'selected':'') }}>
+                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '1' ? 'checked':'') }}>
                                     <label class="form-check-label" for="nurse_option_yes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required
-                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '0' ? 'selected':'') }}>>
+                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '0' ? 'checked':'') }}>>
                                     <label class="form-check-label" for="nurse_option_no">No</label>
                                 </div>
                                 <div class="invalid-feedback">Please provide a nursing option</div>
@@ -339,7 +340,7 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
 
     document.addEventListener('DOMContentLoaded', function() {
         // Handle form submission
-        const form = document.getElementById('createApplicantForm');
+        const form = document.getElementById('editApplicantForm');
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -366,7 +367,7 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
                 if (data.success) {
                     // Show success message and redirect
                     alert(data.message);
-                    // window.location.href = data.redirect;
+                    window.location.href = data.redirect;
                 } else {
                     // Handle validation errors
                     submitBtn.disabled = false;

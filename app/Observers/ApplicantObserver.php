@@ -13,9 +13,11 @@ class ApplicantObserver
      */
     public function created(Applicant $applicant): void
     {
-        $applicant->audits()->create([
+        Audit::create([
             "user_id" => Auth::id(),
-            "data" => json_decode($applicant),
+            "data" => $applicant->toJson(),
+            "auditable_type" => 'Horsefly\Applicant',
+            "auditable_id" => $applicant->id,
             "message" => "Applicant {$applicant->applicant_name} has been created successfully at {$applicant->created_at}",
         ]);
     }
@@ -25,15 +27,21 @@ class ApplicantObserver
      */
     public function updated(Applicant $applicant): void
     {
+        // Check the dirty columns
         $columns = $applicant->getDirty();
-        $applicant['changes_made'] = $columns;
 
-        $applicant->audits()->create([
+        $applicant['changes_made'] = $columns;  // You may want to use a model method to store changes
+
+        // Create the audit log entry
+        Audit::create([
             "user_id" => Auth::id(),
-            "data" => json_decode($applicant),
+            "data" => $applicant->toJson(),
+            "auditable_type" => 'Horsefly\Applicant',
+            "auditable_id" => $applicant->id,
             "message" => "Applicant {$applicant->applicant_name} has been updated successfully at {$applicant->updated_at}",
         ]);
     }
+
 
     /**
      * Handle the Applicant "deleted" event.
