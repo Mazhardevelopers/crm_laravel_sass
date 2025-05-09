@@ -181,8 +181,11 @@ class ApplicantController extends Controller
             $model->where('status', 0);
         } elseif ($statusFilter == 'blocked') {
             $model->where('is_blocked', true);
+        } elseif ($statusFilter == 'not interested') {
+            $model->where('is_temp_not_interested', true);
+        } elseif ($statusFilter == 'no job') {
+            $model->where('is_no_job', true);
         }
-
         if ($request->ajax()) {
             return DataTables::eloquent($model)
                 ->addIndexColumn() // This will automatically add a serial number to the rows
@@ -227,20 +230,52 @@ class ApplicantController extends Controller
                     return $applicant->formatted_updated_at; // Using accessor
                 })
                 ->addColumn('resume', function ($applicant) {
-                    $applicant_cv = (file_exists('public/storage/uploads/' . $applicant->applicant_cv) || $applicant->applicant_cv != null)
-                        ? '<a href="' . asset('storage/' . $applicant->applicant_cv) . '" title="Download CV" target="_blank">
-                        <iconify-icon icon="solar:download-square-bold" class="text-success fs-28"></iconify-icon></a>'
-                        : '<iconify-icon icon="solar:download-square-bold" class="text-light-grey fs-28"></iconify-icon>';
+                    if (!$applicant->is_blocked) {
+                        $applicant_cv = (file_exists('public/storage/uploads/' . $applicant->applicant_cv) || $applicant->applicant_cv != null)
+                            ? '<a href="' . asset('storage/' . $applicant->applicant_cv) . '" title="Download CV" target="_blank">
+                            <iconify-icon icon="solar:download-square-bold" class="text-success fs-28"></iconify-icon></a>'
+                            : '<iconify-icon icon="solar:download-square-bold" class="text-light-grey fs-28"></iconify-icon>';
 
-                    $updated_cv = (file_exists('public/storage/uploads/' . $applicant->updated_cv) || $applicant->updated_cv != null)
-                        ? '<a href="' . asset('storage/' . $applicant->updated_cv) . '" title="Download Updated CV" target="_blank">
-                        <iconify-icon icon="solar:download-square-bold" class="text-primary fs-28"></iconify-icon></a>'
-                        : '<iconify-icon icon="solar:download-square-bold" class="text-grey fs-28"></iconify-icon>';
+                        $updated_cv = (file_exists('public/storage/uploads/' . $applicant->updated_cv) || $applicant->updated_cv != null)
+                            ? '<a href="' . asset('storage/' . $applicant->updated_cv) . '" title="Download Updated CV" target="_blank">
+                            <iconify-icon icon="solar:download-square-bold" class="text-primary fs-28"></iconify-icon></a>'
+                            : '<iconify-icon icon="solar:download-square-bold" class="text-grey fs-28"></iconify-icon>';
+                    } else {
+                        $applicant_cv = '<iconify-icon icon="solar:download-square-bold" class="text-grey fs-28"></iconify-icon>';
+                        $updated_cv = '<iconify-icon icon="solar:download-square-bold" class="text-grey fs-28"></iconify-icon>';
+                    }
 
                     return $applicant_cv . ' ' . $updated_cv;
                 })
-                ->addColumn('status', function ($applicant) {
+                ->addColumn('customStatus', function ($applicant) {
                     $status = '';
+                    if ($applicant->is_blocked == 1) {
+                        $status = '<span class="badge bg-dark">Blocked</span>';
+                    } elseif ($applicant->is_no_response == 1) {
+                        $status = '<span class="badge bg-warning">No Response</span>';
+                    } elseif ($applicant->is_circuit_busy == 1) {
+                        $status = '<span class="badge bg-warning">Circuit Busy</span>';
+                    } elseif ($applicant->is_no_job == 1) {
+                        $status = '<span class="badge bg-warning">No Job</span>';
+                    } elseif ($applicant->is_temp_not_interested == 1) {
+                        $status = '<span class="badge bg-danger">Not <br>Interested</span>';
+                    } elseif ($applicant->status == 1) {
+                        $status = '<span class="badge bg-success">Active</span>';
+                    } else {
+                        $status = '<span class="badge bg-warning">Inactive</span>';
+                    }
+
+                    return $status;
+                })
+                ->addColumn('action', function ($applicant) {
+                    $landline = $applicant->formatted_landline;
+                    $phone = $applicant->formatted_phone;
+                    $postcode = $applicant->formatted_postcode;
+                    $job_title = $applicant->jobTitle ? $applicant->jobTitle->name : '-';
+                    $job_category = $applicant->jobCategory ? $applicant->jobCategory->name : '-';
+                    $job_source = $applicant->jobSource ? $applicant->jobSource->name : '-';
+                    $status = '';
+
                     if ($applicant->is_blocked) {
                         $status = '<span class="badge bg-dark">Blocked</span>';
                     } elseif ($applicant->status) {
@@ -255,27 +290,39 @@ class ApplicantController extends Controller
                         $status = '<span class="badge bg-secondary">Inactive</span>';
                     }
 
-                    return $status;
-                })
-                ->addColumn('action', function ($applicant) {
                     return '<div class="btn-group dropstart">
-                                <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="' . route('applicants.edit', ['id' => $applicant->id]) . '">Edit</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="showDetailsModal(' . $applicant->id . ')">View</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="addNoteModal(' . $applicant->id . ')">Add Note</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $applicant->id . ')">Go to No Job</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $applicant->id . ')">Upload Resume</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" onclick="viewHistory(' . $applicant->id . ')">History</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="viewNotesHistory(' . $applicant->id . ')">Notes History</a></li>
-                                </ul>
-                            </div>';
+                            <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="' . route('applicants.edit', ['id' => $applicant->id]) . '">Edit</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showDetailsModal(
+                                    ' . $applicant->id . ',
+                                    \'' . addslashes(htmlspecialchars($applicant->applicant_name)) . '\',
+                                    \'' . addslashes(htmlspecialchars($applicant->applicant_email)) . '\',
+                                    \'' . addslashes(htmlspecialchars($applicant->applicant_email_secondary)) . '\',
+                                    \'' . addslashes(htmlspecialchars($postcode)) . '\',
+                                    \'' . addslashes(htmlspecialchars($landline)) . '\',
+                                    \'' . addslashes(htmlspecialchars($phone)) . '\',
+                                    \'' . addslashes(htmlspecialchars($job_title)) . '\',
+                                    \'' . addslashes(htmlspecialchars($job_category)) . '\',
+                                    \'' . addslashes(htmlspecialchars($job_source)) . '\',
+                                    \'' . addslashes(htmlspecialchars($status)) . '\'
+                                )">View</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="addNotesModal(' . $applicant->id . ')">Add Note</a></li>
+                                <!--  <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $applicant->id . ')">Go to No Job</a></li> -->
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="triggerFileInput(' . $applicant->id . ')">Upload Resume</a>
+                                    <!-- Hidden File Input -->
+                                    <input type="file" id="fileInput" style="display:none" onchange="uploadFile()">
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="' . route('applicants.history', ['id' => $applicant->id]) . '">History</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="viewNotesHistory(' . $applicant->id . ')">Notes History</a></li>
+                            </ul>
+                        </div>';
                 })
-
-                ->rawColumns(['applicant_notes', 'applicant_landline', 'applicant_phone', 'job_title', 'resume', 'status', 'job_category', 'job_source', 'action'])
+                ->rawColumns(['applicant_notes', 'applicant_landline', 'applicant_phone', 'job_title', 'resume', 'customStatus', 'job_category', 'job_source', 'action'])
                 ->make(true);
         }
     }
@@ -302,7 +349,8 @@ class ApplicantController extends Controller
                 Applicant::where('id', $applicant_id)
                     ->update(array_merge($updateData, [
                         'is_no_response' => false,
-                        'is_blocked' => true
+                        'is_blocked' => true,
+                        'is_temp_not_interested' => false,
                     ]));
                 break;
 
@@ -311,6 +359,7 @@ class ApplicantController extends Controller
                     ->update(array_merge($updateData, [
                         'is_no_response' => false,
                         'is_blocked' => false,
+                        'is_temp_not_interested' => false,
                     ]));
                 break;
 
@@ -320,6 +369,7 @@ class ApplicantController extends Controller
                         'is_circuit_busy' => false,
                         'is_no_response' => true,
                         'is_blocked' => false,
+                        'is_temp_not_interested' => false,
                     ]));
                 break;
 
@@ -329,6 +379,7 @@ class ApplicantController extends Controller
                         'is_no_response' => false,
                         'is_blocked' => false,
                         'is_no_job' => true,
+                        'is_temp_not_interested' => false,
                     ]));
                 break;
 
@@ -337,6 +388,18 @@ class ApplicantController extends Controller
                     ->update(array_merge($updateData, [
                         'is_no_response' => false,
                         'is_circuit_busy' => true,
+                        'is_blocked' => false,
+                        'is_no_job' => false,
+                        'is_temp_not_interested' => false,
+                    ]));
+                break;
+
+            case 'not_interested': // Temp Not Interested
+                Applicant::where('id', $applicant_id)
+                    ->update(array_merge($updateData, [
+                        'is_temp_not_interested' => true,
+                        'is_no_response' => false,
+                        'is_circuit_busy' => false,
                         'is_blocked' => false,
                         'is_no_job' => false,
                     ]));
@@ -505,5 +568,46 @@ class ApplicantController extends Controller
     {
         $applicant = Applicant::findOrFail($id);
         return view('applicants.show', compact('applicant'));
+    }
+    public function uploadCv(Request $request)
+    {
+        // Validate the request (check if a file was uploaded)
+        $request->validate([
+            'resume' => 'required|file|mimes:pdf,doc,docx|max:10240', // Validating file type and size
+            'applicant_id' => 'required|integer|exists:applicants,id', // Validate applicant ID
+        ]);
+
+        // Get the file from the request
+        $file = $request->file('resume');
+
+        // Get the applicant ID from the request
+        $applicantId = $request->input('applicant_id');
+
+        // Define the file path where you want to store the resume
+        // You can optionally use a unique name for the file, or keep the original name
+        $fileName = time() . $applicantId . '.' . $file->getClientOriginalExtension();
+
+        // Store the file in public/storage/uploads directory
+        // The 'public' disk will store the file in the 'public/storage' directory
+        $filePath = $file->storeAs('uploads', $fileName, 'public');
+
+        // Retrieve the applicant
+        $applicant = Applicant::findOrFail($applicantId);
+
+        // Check if the 'applicant_cv' field is null or not
+        if (is_null($applicant->applicant_cv)) {
+            // If applicant_cv is null, save the file path in 'applicant_cv'
+            $applicant->update(['applicant_cv' => $filePath]);
+        } else {
+            // If applicant_cv already exists, save the file path in 'updated_cv'
+            $applicant->update(['updated_cv' => $filePath]);
+        }
+
+        // Return success response
+        return response()->json([
+            'success' => true,
+            'message' => 'File uploaded successfully',
+            'file_path' => $filePath, // You can return the path or save it in the database if needed
+        ]);
     }
 }

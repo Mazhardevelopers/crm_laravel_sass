@@ -27,7 +27,7 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="mb-3">
                                 <label for="job_category" class="form-label">Job Category</label>
-                                <select class="form-select" id="job_category" name="job_category_id" required>
+                                <select class="form-select" data-choices id="job_category" name="job_category_id" required>
                                     <option value="">Choose a Job Category</option>
                                     @foreach($jobCategories as $category)
                                         <option value="{{ $category->id }}" {{ old('job_category_id', $applicant->job_category_id == $category->id ? 'selected':'') }}>{{ $category->name }}</option>
@@ -50,7 +50,7 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="mb-3">
                                 <label for="job_title" class="form-label">Job Title</label>
-                                <select class="form-select" id="job_title" name="job_title_id" required>
+                                <select class="form-select" data-choices id="job_title" name="job_title_id" required>
                                     <option value="">Choose a Job Title</option>
                                     @foreach($jobTitles as $title)
                                         <option value="{{ $title->id }}" {{ old('job_title_id', $applicant->job_title_id == $title->id ? 'selected':'') }}>{{ $title->name }}</option>
@@ -62,7 +62,7 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="mb-3">
                                 <label for="job_source" class="form-label">Job Source</label>
-                                <select class="form-select" id="job_source" name="job_source_id" required>
+                                <select class="form-select" data-choices id="job_source" name="job_source_id" required>
                                     <option value="">Choose a Job Source</option>
                                     @foreach($jobSources as $source)
                                         <option value="{{ $source->id }}" {{ old('job_source_id', $applicant->job_source_id == $source->id ? 'selected':'') }} >{{ $source->name }}</option>

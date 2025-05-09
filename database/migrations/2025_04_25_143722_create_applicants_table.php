@@ -35,6 +35,7 @@ class CreateApplicantsTable extends Migration
 
             // Boolean flags
             $table->boolean('is_blocked')->default(false);
+            $table->boolean('is_temp_not_interested')->default(false);
             $table->boolean('is_no_job')->default(false);
             $table->boolean('is_no_response')->default(false);
             $table->boolean('is_circuit_busy')->default(false);

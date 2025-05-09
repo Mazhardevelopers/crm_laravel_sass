@@ -138,7 +138,7 @@ $jobSources = \Horsefly\JobSource::all();
 
                             </div>
                         </div>
-                        <div class="col-lg-12" id="nurseToggleContainer"  {{ old('have_nursing_home_experience' == '1' ? '':'style="display: none;"') }}>
+                        <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
                             <div class="mb-3">
                                 <label class="form-label">Have Nursing Home Experience?</label>
                                 <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
@@ -437,11 +437,6 @@ $jobSources = \Horsefly\JobSource::all();
             console.error('Error fetching data:', error);
         });
     }
-
-    
-
-
-
 </script>
 @endsection
 @section('script-bottom')

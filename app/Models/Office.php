@@ -26,8 +26,32 @@ class Office extends Model
         'deleted_at',
     ];
 
+    public function getFormattedOfficeNameAttribute()
+    {
+        return ucwords(strtolower($this->office_name));
+    }
+    public function getFormattedPostcodeAttribute()
+    {
+        return strtoupper($this->office_postcode ?? '-');
+    }
+        public function getFormattedCreatedAtAttribute()
+    {
+        return $this->created_at ? $this->created_at->format('d M Y, h:iA') : '-';
+    }
+    public function getFormattedUpdatedAtAttribute()
+    {
+        return $this->updated_at ? $this->updated_at->format('d M Y, h:iA') : '-';
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function contact()
+    {
+        return $this->morphMany(Contact::class, 'contactable');
+    }
+
+
 }

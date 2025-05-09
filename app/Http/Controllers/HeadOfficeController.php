@@ -38,16 +38,24 @@ class HeadOfficeController extends Controller
     }
     public function store(Request $request)
     {
+        // Validation
         $validator = Validator::make($request->all(), [
             'office_name' => 'required|string|max:255',
             'office_postcode' => ['required', 'string', 'max:8', 'regex:/^[A-Z0-9 ]+$/'],
             'office_notes' => 'required|string|max:255',
 
-            //contact persons details
-            'contact_name' => 'required|string|max:255',
-            'contact_email' => 'required|email|max:255',
-            'contact_phone' => 'required|string|max:20',
-            'contact_landline' => 'nullable|string|max:20',
+            // Contact person's details (Array validation)
+            'contact_name' => 'required|array',
+            'contact_name.*' => 'required|string|max:255',
+
+            'contact_email' => 'required|array',
+            'contact_email.*' => 'required|email|max:255',
+
+            'contact_phone' => 'nullable|array',
+            'contact_phone.*' => 'nullable|string|max:20',
+
+            'contact_landline' => 'nullable|array',
+            'contact_landline.*' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -59,30 +67,39 @@ class HeadOfficeController extends Controller
         }
 
         try {
-            $headOfficeData = $request->only([
+            // Get office data
+            $officeData = $request->only([
                 'office_name',
                 'office_postcode',
                 'office_website',
                 'office_notes',
-
-                //contact persons details
-                'contact_name',
-                'contact_email',
-                'contact_phone',
-                'contact_landline',
             ]);
 
-            // Format data
-            $headOfficeData['contact_phone'] = preg_replace('/[^0-9]/', '', $headOfficeData['contact_phone']);
-            $headOfficeData['contact_landline'] = $headOfficeData['contact_landline']
-                ? preg_replace('/[^0-9]/', '', $headOfficeData['contact_landline'])
-                : null;
-            $headOfficeData['user_id'] = Auth::id();
+            // Format data for office
+            $officeData['user_id'] = Auth::id();
+            $office = Office::create($officeData);
 
-            $HeadOffice = Office::create($headOfficeData);
+            // Iterate through each contact provided in the request
+            foreach ($request->input('contact_name') as $index => $contactName) {
+                // Create contact data for each contact in the array
+                $contactData = [
+                    'contact_name' => $contactName,
+                    'contact_email' => $request->input('contact_email')[$index],
+                    'contact_phone' => preg_replace('/[^0-9]/', '', $request->input('contact_phone')[$index]),
+                    'contact_landline' => $request->input('contact_landline')[$index]
+                        ? preg_replace('/[^0-9]/', '', $request->input('contact_landline')[$index])
+                        : null,
+
+                    // No need to manually add `contactable_id` and `contactable_type`
+                    // if the polymorphic relation is defined in the models.
+                ];
+
+                // Create each contact and associate it with the office
+                $office->contact()->create($contactData);
+            }
 
             // Generate UID
-            $HeadOffice->update(['office_uid' => md5(uniqid($HeadOffice->id, true))]);
+            $office->update(['office_uid' => md5(uniqid($office->id, true))]);
 
             return response()->json([
                 'success' => true,
@@ -94,7 +111,7 @@ class HeadOfficeController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while creating the applicant. Please try again.'
+                'message' => 'An error occurred while creating the head office. Please try again.'
             ], 500);
         }
     }
@@ -102,23 +119,33 @@ class HeadOfficeController extends Controller
     {
         $statusFilter = $request->input('status_filter', ''); // Default is empty (no filter)
 
-        $model = Office::query()->latest();
+        $offices = Office::query()->latest();
 
         // Filter by status if it's not empty
         if ($statusFilter == 'active') {
-            $model->where('status', 1);
+            $offices->where('status', 1);
         } elseif ($statusFilter == 'inactive') {
-            $model->where('status', 0);
+            $offices->where('status', 0);
         }
 
         if ($request->ajax()) {
-            return DataTables::eloquent($model)
+            return DataTables::eloquent($offices)
                 ->addIndexColumn() // This will automatically add a serial number to the rows
                 ->addColumn('office_name', function ($office) {
                     return $office->formatted_office_name; // Using accessor
                 })
                 ->addColumn('office_postcode', function ($office) {
                     return $office->formatted_postcode; // Using accessor
+                })
+                ->addColumn('website', function ($office) {
+                    $website = $office->website;
+                    return $website ? '<a href="' . e($website) . '" target="_blank">' . e($website) . '</a>' : '-';
+                })
+                ->addColumn('created_at', function ($office) {
+                    return $office->formatted_created_at; // Using accessor
+                })
+                ->addColumn('updated_at', function ($office) {
+                    return $office->formatted_updated_at; // Using accessor
                 })
                 ->addColumn('office_notes', function ($office) {
                     $notes = htmlspecialchars($office->office_notes, ENT_QUOTES, 'UTF-8');
@@ -166,7 +193,7 @@ class HeadOfficeController extends Controller
                             </div>';
                 })
 
-                ->rawColumns(['office_notes', 'status', 'action'])
+                ->rawColumns(['office_notes', 'status', 'action', 'website'])
                 ->make(true);
         }
     }

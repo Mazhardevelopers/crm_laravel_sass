@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\HeadOfficeController;
+use App\Http\Controllers\ModuleNotesController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\SaleController;
 
@@ -37,7 +38,8 @@ Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
         Route::post('store', [ApplicantController::class, 'store'])->name('applicants.store');
         Route::get('edit', [ApplicantController::class, 'edit'])->name('applicants.edit');
         Route::post('update', [ApplicantController::class, 'update'])->name('applicants.update');
-        Route::get('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
+        Route::post('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
+        Route::get('history', [ApplicantController::class, 'applicantHistory'])->name('applicants.history');
     });
     Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('getApplicants');
     Route::get('getJobTitles', [ApplicantController::class, 'getJobTitles'])->name('getJobTitles');
@@ -62,7 +64,6 @@ Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
         Route::post('update', [UnitController::class, 'update'])->name('units.update');
         Route::get('{id}', [UnitController::class, 'applicantDetails'])->name('units.details');
     });
-
     Route::get('getUnits', [UnitController::class, 'getUnits'])->name('getUnits');
 
     Route::group(['prefix' => 'sales'], function () {
@@ -73,8 +74,10 @@ Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
         Route::post('update', [SaleController::class, 'update'])->name('sales.update');
         Route::get('{id}', [SaleController::class, 'applicantDetails'])->name('sales.details');
     });
-
     Route::get('getSales', [SaleController::class, 'getSales'])->name('getSales');
+
+    Route::post('module-notes/store', [ModuleNotesController::class, 'store'])->name('moduleNotes.store');
+    Route::get('getModuleNotesHistory', [ModuleNotesController::class, 'getModuleNotesHistory'])->name('getModuleNotesHistory');
 
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
 });

@@ -35,6 +35,7 @@ class Applicant extends Model
 
         // Boolean flags
         'is_blocked',
+        'is_temp_not_interested',
         'is_no_job',
         'is_no_response',
         'is_circuit_busy',

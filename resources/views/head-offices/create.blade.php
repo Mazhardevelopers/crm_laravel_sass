@@ -7,7 +7,7 @@
 @section('content')
 <div class="row">
     <div class="col-xl-12 col-lg-12">
-        <form id="createApplicantForm" action="{{ route('head-offices.store') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+        <form id="createHeadOfficeForm" action="{{ route('head-offices.store') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
             @csrf
             <div class="card">
                 <div class="card-header">
@@ -26,11 +26,11 @@
                             <div class="mb-3">
                                 <label for="office_postcode" class="form-label">PostCode</label>
                                 <input type="text" id="office_postcode" class="form-control" value="{{ old('office_postcode') }}" 
-                                name="office_postcode" placeholder="Enter PostCode" required>
+                                name="office_postcode" placeholder="Enter PostCode" required maxlength="8">
                                 <div class="invalid-feedback">Please provide a postcode</div>
                             </div>
                         </div>
-                        <div class="col-lg-3">
+                        <div class="col-lg-4">
                             <div class="mb-3">
                                 <label for="office_website" class="form-label">Website</label>
                                 <input type="url" id="office_website" class="form-control" name="office_website" 
@@ -51,11 +51,11 @@
                                             <div class="invalid-feedback">Please provide a valid email</div>
                                         </div>
                                         <div class="col-lg-3">
-                                            <input type="text" class="form-control" name="contact_phone[]" placeholder="Contact Phone" required>
+                                            <input type="text" class="form-control" name="contact_phone[]" placeholder="Contact Phone" maxlength="20">
                                             <div class="invalid-feedback">Please provide a phone number</div>
                                         </div>
                                         <div class="col-lg-3">
-                                            <input type="text" class="form-control" name="contact_landline[]" placeholder="Contact Landline" required>
+                                            <input type="text" class="form-control" name="contact_landline[]" placeholder="Contact Landline" maxlength="20">
                                             <div class="invalid-feedback">Please provide a landline number</div>
                                         </div>
                                     </div>
@@ -122,7 +122,7 @@
                             Save</button>
                     </div>
                     <div class="col-lg-2">
-                        <a href="{{ route('applicants.list') }}" class="btn btn-dark w-100">Cancel</a>
+                        <a href="{{ route('head-offices.list') }}" class="btn btn-dark w-100">Cancel</a>
                     </div>
                 </div>
             </div>
@@ -188,7 +188,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // Handle form submission
-        const form = document.getElementById('createApplicantForm');
+        const form = document.getElementById('createHeadOfficeForm');
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -198,9 +198,6 @@
 
             // Collect form data
             const formData = new FormData(form);
-            
-            // Add any additional data
-            formData.append('job_type', document.getElementById('job_type').value);
           
             fetch(form.action, {
                 method: 'POST',
