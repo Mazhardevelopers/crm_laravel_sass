@@ -107,7 +107,7 @@ class ApplicantController extends Controller
             if ($request->hasFile('applicant_cv')) {
                 // Get the original filename
                 $filenameWithExt = $request->file('applicant_cv')->getClientOriginalName();
-
+        
                 // Get just the filename without extension
                 $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
 
@@ -119,10 +119,6 @@ class ApplicantController extends Controller
 
                 // Upload file to public/uploads directory
                 $path = $request->file('applicant_cv')->storeAs('uploads', $fileNameToStore, 'public');
-
-                // For direct move (alternative to storeAs)
-                // $request->file('applicant_cv')->move(public_path('uploads'), $fileNameToStore);
-                // $path = 'uploads/'.$fileNameToStore;
             }
 
             $applicantData['applicant_cv'] = $path;
@@ -513,23 +509,23 @@ class ApplicantController extends Controller
             // Store the user ID
             $applicantData['user_id'] = Auth::id();
 
-            // Handle file upload if a CV is provided
-            $path = null;
-            if ($request->hasFile('applicant_cv')) {
-                // Get the original file name
-                $filenameWithExt = $request->file('applicant_cv')->getClientOriginalName();
-                // Get the filename without extension
-                $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-                // Get file extension
-                $extension = $request->file('applicant_cv')->getClientOriginalExtension();
-                // Create a new filename with a timestamp
-                $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-                // Store the file in the public/uploads directory
-                $path = $request->file('applicant_cv')->storeAs('uploads', $fileNameToStore, 'public');
-            }
+            // // Handle file upload if a CV is provided
+            // $path = null;
+            // if ($request->hasFile('applicant_cv')) {
+            //     // Get the original file name
+            //     $filenameWithExt = $request->file('applicant_cv')->getClientOriginalName();
+            //     // Get the filename without extension
+            //     $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+            //     // Get file extension
+            //     $extension = $request->file('applicant_cv')->getClientOriginalExtension();
+            //     // Create a new filename with a timestamp
+            //     $fileNameToStore = $filename . '_' . time() . '.' . $extension;
+            //     // Store the file in the public/uploads directory
+            //     $path = $request->file('applicant_cv')->storeAs('uploads', $fileNameToStore, 'public');
+            // }
 
-            // If a CV was uploaded, assign the path to the data
-            $applicantData['applicant_cv'] = $path;
+            // // If a CV was uploaded, assign the path to the data
+            // $applicantData['applicant_cv'] = $path;
 
             // Get the applicant ID from the request
             $id = $request->input('applicant_id');

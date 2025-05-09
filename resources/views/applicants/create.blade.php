@@ -177,13 +177,12 @@ $jobSources = \Horsefly\JobSource::all();
                 </div>
             </div>
             
-            <div class="card">
+          <!--   <div class="card">
                 <div class="card-header">
                     <h4 class="card-title">Upload Documents</h4>
                 </div>
                 
-                <!-- Dropzone Container -->
-                <div id="applicantCvDropzone" class="dropzone">
+               <div id="applicantCvDropzone" class="dropzone">
                     <div class="dz-message needsclick">
                         <i class="h1 ri-upload-cloud-2-line"></i>
                         <h3>Drop files here or click to upload.</h3>
@@ -193,20 +192,17 @@ $jobSources = \Horsefly\JobSource::all();
                     </div>
                 </div>
             
-                <!-- Standard File Input (hidden by default) -->
                 <div class="p-3" id="regularFileInput" style="display: none;">
                     <label class="form-label">Or select file manually:</label>
-                    <input type="file" class="form-control" name="applicant_cv" id="applicant_cv">
+                    {{-- <input type="file" class="form-control" name="applicant_cv" id="applicant_cv"> --}}
                 </div>
             
-                <!-- Toggle between upload methods -->
                 <div class="text-center p-2">
                     <button type="button" class="btn btn-sm btn-link" id="toggleUploadMethod">
                         Switch to manual file selection
                     </button>
                 </div>
             
-                <!-- Dropzone Preview -->
                 <ul class="list-unstyled mb-0" id="dropzone-preview">
                     <li class="mt-2" id="dropzone-preview-list">
                         <div class="border rounded">
@@ -232,12 +228,12 @@ $jobSources = \Horsefly\JobSource::all();
                         </div>
                     </li>
                 </ul>
-            </div>
-            {{-- <div class="form-group">
+            </div> -->
+            <div class="form-group">
                 <label for="applicant_cv">Upload CV</label>
                 <input type="file" class="form-control" name="applicant_cv" id="applicant_cv">
                 <small class="text-muted">Allowed file types: docx, doc, csv, pdf (Max 5MB)</small>
-            </div> --}}
+            </div>
             
             <div class="mb-3 rounded">
                 <div class="row justify-content-end g-2">
