@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Horsefly\Office;
-use Horsefly\Applicant;
+use Horsefly\Contact;
 use Horsefly\ModuleNote;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -147,19 +147,6 @@ class HeadOfficeController extends Controller
                 ->addColumn('updated_at', function ($office) {
                     return $office->formatted_updated_at; // Using accessor
                 })
-                ->addColumn('office_notes', function ($office) {
-                    $notes = htmlspecialchars($office->office_notes, ENT_QUOTES, 'UTF-8');
-                    $name = htmlspecialchars($office->office_name, ENT_QUOTES, 'UTF-8');
-                    $postcode = htmlspecialchars($office->office_postcode, ENT_QUOTES, 'UTF-8');
-
-                    // Tooltip content with additional data-bs-placement and title
-                    return '<a href="#" title="View Note" onclick="showHeadOfficeNotesModal(\'' . $notes . '\', \'' . $name . '\', \'' . $postcode . '\')">
-                                <iconify-icon icon="solar:eye-scan-bold" class="text-primary fs-24"></iconify-icon>
-                            </a>
-                            <a href="#" title="Add Short Note" onclick="addHeadOfficeShortNotesModal(\'' . $office->id . '\')">
-                                <iconify-icon icon="solar:clipboard-add-linear" class="text-warning fs-24"></iconify-icon>
-                            </a>';
-                })
                 ->addColumn('created_at', function ($office) {
                     return $office->formatted_created_at; // Using accessor
                 })
@@ -185,15 +172,13 @@ class HeadOfficeController extends Controller
                                     <li><a class="dropdown-item" href="' . route('head-offices.edit', ['id' => $office->id]) . '">Edit</a></li>
                                     <li><a class="dropdown-item" href="' . route('head-offices.details', ['id' => $office->id]) . '">View</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="addNoteModal(' . $office->id . ')">Add Note</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="goToNoJob(' . $office->id . ')">Go to No Job</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" onclick="viewHistory(' . $office->id . ')">History</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="viewNotesHistory(' . $office->id . ')">Notes History</a></li>
                                 </ul>
                             </div>';
                 })
 
-                ->rawColumns(['office_notes', 'status', 'action', 'website'])
+                ->rawColumns(['status', 'action', 'website'])
                 ->make(true);
         }
     }
@@ -231,7 +216,7 @@ class HeadOfficeController extends Controller
 
         return redirect()->to(url()->previous());
     }
-    public function applicantDetails($id)
+    public function officeDetails($id)
     {
         $applicant = Applicant::findOrFail($id);
         return view('applicants.details', compact('applicant'));
@@ -252,21 +237,102 @@ class HeadOfficeController extends Controller
     }
     public function update(Request $request)
     {
-        $id = $request->input('applicant_id');
-        $applicant = Applicant::findOrFail($id);
-        $applicant->update($request->all());
+         // Validation
+         $validator = Validator::make($request->all(), [
+            'office_name' => 'required|string|max:255',
+            'office_postcode' => ['required', 'string', 'max:8', 'regex:/^[A-Z0-9 ]+$/'],
+            'office_notes' => 'required|string|max:255',
 
-        return redirect()->route('applicants.list')->with('success', 'Applicant updated successfully');
+            // Contact person's details (Array validation)
+            'contact_name' => 'required|array',
+            'contact_name.*' => 'required|string|max:255',
+
+            'contact_email' => 'required|array',
+            'contact_email.*' => 'required|email|max:255',
+
+            'contact_phone' => 'nullable|array',
+            'contact_phone.*' => 'nullable|string|max:20',
+
+            'contact_landline' => 'nullable|array',
+            'contact_landline.*' => 'nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Please fix the errors in the form'
+            ], 422);
+        }
+
+        try {
+            // Get office data
+            $officeData = $request->only([
+                'office_name',
+                'office_postcode',
+                'office_website',
+                'office_notes',
+            ]);
+
+            // Get the office ID from the request
+            $id = $request->input('office_id');
+
+            // Retrieve the office record
+            $office = Office::find($id);
+
+             // If the applicant doesn't exist, throw an exception
+             if (!$office) {
+                throw new \Exception("Head Office not found with ID: " . $id);
+            }
+
+            // Update the applicant with the validated and formatted data
+            $office->update($officeData);
+
+            Contact::where('contactable_id',$office->id)
+                ->where('contactable_type','Horsefly\Office')->delete();
+
+            // Iterate through each contact provided in the request
+            foreach ($request->input('contact_name') as $index => $contactName) {
+                // Create contact data for each contact in the array
+                $contactData = [
+                    'contact_name' => $contactName,
+                    'contact_email' => $request->input('contact_email')[$index],
+                    'contact_phone' => preg_replace('/[^0-9]/', '', $request->input('contact_phone')[$index]),
+                    'contact_landline' => $request->input('contact_landline')[$index]
+                        ? preg_replace('/[^0-9]/', '', $request->input('contact_landline')[$index])
+                        : null,
+
+                    // No need to manually add `contactable_id` and `contactable_type`
+                    // if the polymorphic relation is defined in the models.
+                ];
+
+                // Create each contact and associate it with the office
+                $office->contact()->create($contactData);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Head Office updated successfully',
+                'redirect' => route('head-offices.list')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating head office: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the head office. Please try again.'
+            ], 500);
+        }
     }
     public function destroy($id)
     {
-        $applicant = Applicant::findOrFail($id);
+        $applicant = Office::findOrFail($id);
         $applicant->delete();
         return redirect()->route('applicants.list')->with('success', 'Applicant deleted successfully');
     }
     public function show($id)
     {
-        $applicant = Applicant::findOrFail($id);
+        $applicant = Office::findOrFail($id);
         return view('applicants.show', compact('applicant'));
     }
 }

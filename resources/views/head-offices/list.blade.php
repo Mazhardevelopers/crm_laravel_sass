@@ -64,7 +64,6 @@
                                 <th>Name</th>
                                 <th>PostCode</th>
                                 <th>Website</th>
-                                <th>Notes</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -129,7 +128,6 @@
                     { data: 'office_name', name: 'office_name' },
                     { data: 'office_postcode', name: 'office_postcode' },
                     { data: 'office_website', name: 'office_website' },
-                    { data: 'office_notes', name: 'office_notes' },
                     { data: 'status', name: 'status' },
                     { data: 'action', name: 'action', orderable: false }
                 ],

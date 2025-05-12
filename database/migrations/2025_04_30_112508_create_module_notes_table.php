@@ -27,11 +27,6 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
-
-        // Add index for the polymorphic relationship
-        Schema::table('module_notes', function (Blueprint $table) {
-            $table->index(['user_id', 'module_noteable_id', 'module_noteable_type']);
-        });
     }
     /**
      * Reverse the migrations.

@@ -38,8 +38,9 @@
                                     <i class="ri-download-line me-1"></i> Export
                                 </button>
                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                    <a class="dropdown-item" href="#">Export All Data</a>
-                                    <a class="dropdown-item" href="#">Export Emails</a>
+                                    <a class="dropdown-item" href="{{ route('applicants.export', ['type' => 'all']) }}">Export All Data</a>
+                                    <a class="dropdown-item" href="{{ route('applicants.export', ['type' => 'emails']) }}">Export Emails</a>
+                                    <a class="dropdown-item" href="{{ route('applicants.export', ['type' => 'noLatLong']) }}">Export no LAT & LONG</a>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-outline-primary me-1 my-1" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Import CSV">

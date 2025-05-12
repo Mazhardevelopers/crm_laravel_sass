@@ -10,6 +10,8 @@ use Horsefly\JobSource;
 use Horsefly\Audit;
 use Horsefly\JobCategory;
 use Horsefly\JobTitle;
+use App\Exports\ApplicantsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -506,9 +508,6 @@ class ApplicantController extends Controller
                 'gender'
             ]);
 
-            // Store the user ID
-            $applicantData['user_id'] = Auth::id();
-
             // // Handle file upload if a CV is provided
             // $path = null;
             // if ($request->hasFile('applicant_cv')) {
@@ -605,5 +604,9 @@ class ApplicantController extends Controller
             'message' => 'File uploaded successfully',
             'file_path' => $filePath, // You can return the path or save it in the database if needed
         ]);
+    }
+    public function export($type)
+    {
+        return Excel::download(new ApplicantsExport($type), "applicants_{$type}.csv");
     }
 }

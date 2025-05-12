@@ -27,7 +27,7 @@ Route::get('/', [LoginController::class, 'showLoginForm'])->name('login')->middl
 Route::post('login', [LoginController::class, 'login']);
 Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
+Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('', [RoutingController::class, 'index'])->name('root');
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
@@ -40,7 +40,9 @@ Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
         Route::post('update', [ApplicantController::class, 'update'])->name('applicants.update');
         Route::post('uploadCv', [ApplicantController::class, 'uploadCv'])->name('applicants.uploadCv');
         Route::get('history', [ApplicantController::class, 'applicantHistory'])->name('applicants.history');
+        Route::get('{type}', [ApplicantController::class, 'export'])->name('applicants.export');
     });
+
     Route::get('getApplicants', [ApplicantController::class, 'getApplicants'])->name('getApplicants');
     Route::get('getJobTitles', [ApplicantController::class, 'getJobTitles'])->name('getJobTitles');
     Route::post('storeShortNotes', [ApplicantController::class, 'storeShortNotes'])->name('storeShortNotes');
@@ -80,4 +82,5 @@ Route::group(['prefix' => '/', 'middleware' => 'ip_address'], function () {
     Route::get('getModuleNotesHistory', [ModuleNotesController::class, 'getModuleNotesHistory'])->name('getModuleNotesHistory');
 
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
+
 });

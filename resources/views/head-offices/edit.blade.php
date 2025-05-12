@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Edit Applicant', 'subTitle' => 'Home'])
+@extends('layouts.vertical', ['title' => 'Edit Head Office', 'subTitle' => 'Home'])
 
 @section('css')
 @vite(['node_modules/choices.js/public/assets/styles/choices.min.css'])
@@ -6,253 +6,151 @@
 
 @section('content')
 @php
-$jobCategories = \Horsefly\JobCategory::all();
-$jobTitles = \Horsefly\JobTitle::all();
-$jobSources = \Horsefly\JobSource::all();
-$applicant_id = request()->query('id');
-$applicant = \Horsefly\Applicant::find($applicant_id);
+$office_id = request()->query('id');
+$office = \Horsefly\Office::find($office_id);
+$contacts = \Horsefly\Contact::where('contactable_id',$office->id)
+                ->where('contactable_type','Horsefly\Office')->get();
 @endphp
 
 <div class="row">
     <div class="col-xl-12 col-lg-12">
-        <form id="createApplicantForm" action="{{ route('applicants.update') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+        <form id="editHeadOfficeForm" action="{{ route('head-offices.update') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="office_id" value="{{ $office_id }}">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Applicant Information</h4>
+                    <h4 class="card-title">Head Office Information</h4>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-lg-3 col-md-6 col-sm-12">
+                        <div class="col-lg-4">
                             <div class="mb-3">
-                                <label for="job_category" class="form-label">Job Category</label>
-                                <select class="form-select" id="job_category" name="job_category_id" required>
-                                    <option value="">Choose a Job Category</option>
-                                    @foreach($jobCategories as $category)
-                                        <option value="{{ $category->id }}" {{ old('job_category_id', $applicant->job_category_id == $category->id ? 'selected':'') }}>{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="invalid-feedback">Please select a job category</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="mb-3">
-                                <label for="job_type" class="form-label">Job Type</label>
-                                <select class="form-select" id="job_type" name="job_type" required>
-                                    <option value="">Choose a Job Type</option>
-                                    <option value="specialist" {{ $applicant->job_type || $applicant->job_type == 'specialist' ? 'selected':'' }}>Specialist</option>
-                                    <option value="non-specialist" {{ $applicant->job_type || $applicant->job_type == 'non-specialist' ? 'selected':'' }}>Non Specialist</option>
-                                </select>
-                                <div class="invalid-feedback">Please select a job type</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="mb-3">
-                                <label for="job_title" class="form-label">Job Title</label>
-                                <select class="form-select" id="job_title" name="job_title_id" required>
-                                    <option value="">Choose a Job Title</option>
-                                    @foreach($jobTitles as $title)
-                                        <option value="{{ $title->id }}" {{ old('job_title_id', $applicant->job_title_id == $title->id ? 'selected':'') }}>{{ $title->name }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="invalid-feedback">Please select a job title</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-12">
-                            <div class="mb-3">
-                                <label for="job_source" class="form-label">Job Source</label>
-                                <select class="form-select" id="job_source" name="job_source_id" required>
-                                    <option value="">Choose a Job Source</option>
-                                    @foreach($jobSources as $source)
-                                        <option value="{{ $source->id }}" {{ old('job_source_id', $applicant->job_source_id == $source->id ? 'selected':'') }} >{{ $source->name }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="invalid-feedback">Please select a job source</div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-3">
-                            <div class="mb-3">
-                                <label for="applicant_name" class="form-label">Name</label>
-                                <input type="text" id="applicant_name" class="form-control" name="applicant_name" 
-                                value="{{ old('applicant_name', $applicant->applicant_name) }}" placeholder="Full Name" required>
+                                <label for="office_name" class="form-label">Name</label>
+                                <input type="text" id="office_name" class="form-control" name="office_name" value="{{ old('office_name', $office->office_name ) }}" placeholder="Full Name" required>
                                 <div class="invalid-feedback">Please provide a name</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="mb-3">
-                                <label for="gender" class="form-label">Gender</label>
-                                <select class="form-select" id="gender" name="gender" required>
-                                    <option value="">Choose Gender</option>
-                                    <option value="m" {{ old('gender', $applicant->gender == 'm' ? 'selected':'') }}>Male</option>
-                                    <option value="f" {{ old('gender', $applicant->gender == 'f' ? 'selected':'') }}>Female</option>
-                                </select>
-                                <div class="invalid-feedback">Please provide gender</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="mb-3">
-                                <label for="applicant_email_primary" class="form-label">Email <small class="text-info">(Primary)</small></label>
-                                <input type="email" id="applicant_email_primary" class="form-control" name="applicant_email" 
-                                value="{{ old('applicant_email', $applicant->applicant_email) }}" placeholder="Enter Email" required>
-                                <div class="invalid-feedback">Please provide a valid email</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="mb-3">
-                                <label for="applicant_email_secondary" class="form-label">Email <small class="text-info">(Secondary)</small></label>
-                                <input type="email" id="applicant_email_secondary" class="form-control" name="applicant_email_secondary" 
-                                value="{{ old('applicant_email_secondary', $applicant->applicant_email_secondary) }}" placeholder="Enter Email">
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="mb-3">
-                                <label for="applicant_postcode" class="form-label">PostCode <small class="text-info">(If postcode is not available then use current or last workplace postcode)</small></label>
-                                <input type="text" id="applicant_postcode" class="form-control" value="{{ old('applicant_postcode', $applicant->applicant_postcode) }}" 
-                                name="applicant_postcode" placeholder="Enter PostCode" required>
+                                <label for="office_postcode" class="form-label">PostCode</label>
+                                <input type="text" id="office_postcode" class="form-control" value="{{ old('office_postcode', $office->office_postcode ) }}" 
+                                name="office_postcode" placeholder="Enter PostCode" required maxlength="8">
                                 <div class="invalid-feedback">Please provide a postcode</div>
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="mb-3">
-                                <label for="applicant_phone" class="form-label">Phone</label>
-                                <input type="tel" id="applicant_phone" class="form-control" name="applicant_phone" 
-                                value="{{ old('applicant_phone', $applicant->applicant_phone) }}"  placeholder="Enter Phone Number" required>
-                                <div class="invalid-feedback">Please provide a phone number</div>
+                                <label for="office_website" class="form-label">Website</label>
+                                <input type="url" id="office_website" class="form-control" name="office_website" 
+                                value="{{ old('office_website', $office->office_website ) }}" placeholder="Enter URL">
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <div class="mb-3">
-                                <label for="applicant_landline" class="form-label">Landline</label>
-                                <input type="tel" id="applicant_landline" class="form-control" value="{{ old('applicant_landline', $applicant->applicant_landline) }}" name="applicant_landline" placeholder="Enter Landline Number">
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-6">
-                            <div class="mb-3">
-                                <label for="applicant_experience" class="form-label">Experience <small class="text-info">(Optional)</small></label>
-                                <textarea class="form-control" id="applicant_experience" name="applicant_experience" rows="3" placeholder="Enter Experience">
-                                    {{ old('applicant_experience', $applicant->applicant_experience) }}
-                                </textarea>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="mb-3">
-                                <label for="applicant_notes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="applicant_notes" name="applicant_notes" rows="3" placeholder="Enter Notes" required>
-                                    {{ old('applicant_notes', $applicant->applicant_notes) }}
-                                </textarea>
-                                <div class="invalid-feedback">Please provide notes</div>
-                            </div>
-                        </div>
-                        <div class="col-lg-12" id="nurseToggleContainer" style="display: none;">
-                            <div class="mb-3">
-                                <label class="form-label">Have Nursing Home Experience?</label>
-                                <p class="text-muted">Please indicate if the applicant has prior experience working in a nursing home.</p>
-                                <small class="text-info">This information helps us better understand the applicant's background.</small>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_yes" value="1" required
-                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '1' ? 'selected':'') }}>
-                                    <label class="form-check-label" for="nurse_option_yes">Yes</label>
+                        <div class="col-lg-12">
+                            <div class="mb-3 border px-3 py-5 rounded" style="background-color: #f9f9f9;">
+                                <label class="form-label">Contact Persons</label>
+                                <div id="contactPersonsContainer">
+                                    @forelse($contacts as $row)
+                                    <div class="contact-person-form row g-3 mb-3">
+                                        <div class="col-lg-3">
+                                            <input type="text" class="form-control" name="contact_name[]" placeholder="Contact Name" required value="{{ $row->contact_name }}">
+                                            <div class="invalid-feedback">Please provide a contact name</div>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <input type="email" class="form-control" name="contact_email[]" placeholder="Contact Email" required value="{{ $row->contact_email }}">
+                                            <div class="invalid-feedback">Please provide a valid email</div>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <input type="text" class="form-control" name="contact_phone[]" placeholder="Contact Phone" maxlength="20" value="{{ $row->contact_phone }}">
+                                            <div class="invalid-feedback">Please provide a phone number</div>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <input type="text" class="form-control" name="contact_landline[]" placeholder="Contact Landline" maxlength="20" value="{{ $row->contact_landline }}">
+                                            <div class="invalid-feedback">Please provide a landline number</div>
+                                        </div>
+                                    </div>
+                                    @empty
+                                        <div class="contact-person-form row g-3 mb-3">
+                                            <div class="col-lg-3">
+                                                <input type="text" class="form-control" name="contact_name[]" placeholder="Contact Name" required>
+                                                <div class="invalid-feedback">Please provide a contact name</div>
+                                            </div>
+                                            <div class="col-lg-3">
+                                                <input type="email" class="form-control" name="contact_email[]" placeholder="Contact Email" required>
+                                                <div class="invalid-feedback">Please provide a valid email</div>
+                                            </div>
+                                            <div class="col-lg-3">
+                                                <input type="text" class="form-control" name="contact_phone[]" placeholder="Contact Phone" maxlength="20">
+                                                <div class="invalid-feedback">Please provide a phone number</div>
+                                            </div>
+                                            <div class="col-lg-3">
+                                                <input type="text" class="form-control" name="contact_landline[]" placeholder="Contact Landline" maxlength="20">
+                                                <div class="invalid-feedback">Please provide a landline number</div>
+                                            </div>
+                                        </div>
+                                    @endforelse
                                 </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="have_nursing_home_experience" id="nurse_option_no" value="0" required
-                                    {{ old('have_nursing_home_experience', $applicant->have_nursing_home_experience == '0' ? 'selected':'') }}>>
-                                    <label class="form-check-label" for="nurse_option_no">No</label>
-                                </div>
-                                <div class="invalid-feedback">Please provide a nursing option</div>
-
+                                <button type="button" class="btn btn-secondary float-end" id="addContactPersonButton">Add More</button>
                             </div>
                         </div>
 
                         <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const jobCategorySelect = document.getElementById('job_category');
-                                const nurseToggleContainer = document.getElementById('nurseToggleContainer');
+                            document.getElementById('addContactPersonButton').addEventListener('click', function () {
+                                const container = document.getElementById('contactPersonsContainer');
+                                const newForm = document.createElement('div');
+                                newForm.classList.add('contact-person-form', 'row', 'g-3', 'mb-3');
+                                newForm.innerHTML = `
+                                    <div class="col-lg-3">
+                                        <input type="text" class="form-control" name="contact_name[]" placeholder="Contact Name" required>
+                                        <div class="invalid-feedback">Please provide a contact name</div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <input type="email" class="form-control" name="contact_email[]" placeholder="Contact Email" required>
+                                        <div class="invalid-feedback">Please provide a valid email</div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <input type="text" class="form-control" name="contact_phone[]" placeholder="Contact Phone" required>
+                                        <div class="invalid-feedback">Please provide a phone number</div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <input type="text" class="form-control" name="contact_landline[]" placeholder="Contact Landline" required>
+                                        <div class="invalid-feedback">Please provide a landline number</div>
+                                    </div>
+                                    <div class="col-lg-1 d-flex align-items-center">
+                                        <button type="button" class="btn btn-transparent btn-sm removeContactPersonButton"> <iconify-icon icon="solar:trash-bin-minimalistic-bold" class="text-danger fs-24"></iconify-icon></button>
+                                    </div>
+                                `;
+                                container.appendChild(newForm);
+                            });
 
-                                jobCategorySelect.addEventListener('change', function () {
-                                    const selectedOption = jobCategorySelect.options[jobCategorySelect.selectedIndex];
-                                    if (selectedOption && selectedOption.text.toLowerCase() === 'nurse') {
-                                        nurseToggleContainer.style.display = 'block';
-                                    } else {
-                                        nurseToggleContainer.style.display = 'none';
+                            document.getElementById('contactPersonsContainer').addEventListener('click', function (e) {
+                                const button = e.target.closest('.removeContactPersonButton');
+                                if (button) {
+                                    const forms = document.querySelectorAll('.contact-person-form');
+                                    if (forms.length > 1) {
+                                        button.closest('.contact-person-form').remove();
                                     }
-                                });
+                                }
                             });
                         </script>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Upload Documents</h4>
-                </div>
-                
-                <!-- Dropzone Container -->
-                <div id="applicantCvDropzone" class="dropzone">
-                    <div class="dz-message needsclick">
-                        <i class="h1 ri-upload-cloud-2-line"></i>
-                        <h3>Drop files here or click to upload.</h3>
-                        <span class="text-muted fs-13">
-                            Allowed file types: docx, doc, csv, pdf (Max 5MB)
-                        </span>
-                    </div>
-                </div>
-            
-                <!-- Standard File Input (hidden by default) -->
-                <div class="p-3" id="regularFileInput" style="display: none;">
-                    <label class="form-label">Or select file manually:</label>
-                    <input type="file" class="form-control" name="applicant_cv" id="applicant_cv">
-                </div>
-            
-                <!-- Toggle between upload methods -->
-                <div class="text-center p-2">
-                    <button type="button" class="btn btn-sm btn-link" id="toggleUploadMethod">
-                        Switch to manual file selection
-                    </button>
-                </div>
-            
-                <!-- Dropzone Preview -->
-                <ul class="list-unstyled mb-0" id="dropzone-preview">
-                    <li class="mt-2" id="dropzone-preview-list">
-                        <div class="border rounded">
-                            <div class="d-flex p-2">
-                                <div class="flex-shrink-0 me-3">
-                                    <div class="avatar-sm bg-light rounded">
-                                        <img data-dz-thumbnail class="img-fluid rounded d-block" src="#" alt="Dropzone-Image" />
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="pt-1">
-                                        <h5 class="fs-14 mb-1" data-dz-name>&nbsp;</h5>
-                                        <p class="fs-13 text-muted mb-0" data-dz-size></p>
-                                        <strong class="error text-danger" data-dz-errormessage></strong>
-                                    </div>
-                                </div>
-                                <div class="flex-shrink-0 ms-3">
-                                    <button data-dz-remove class="btn btn-sm btn-transparent text-danger">
-                                        <iconify-icon icon="solar:trash-bin-trash-bold" class="align-middle fs-24"></iconify-icon>
-                                    </button>
-                                </div>
+
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label for="office_notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="office_notes" name="office_notes" rows="3" placeholder="Enter Notes" required>{{ old('office_notes', $office->office_notes ) }}</textarea>
+                                <div class="invalid-feedback">Please provide notes</div>
                             </div>
                         </div>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
-            {{-- <div class="form-group">
-                <label for="applicant_cv">Upload CV</label>
-                <input type="file" class="form-control" name="applicant_cv" id="applicant_cv">
-                <small class="text-muted">Allowed file types: docx, doc, csv, pdf (Max 5MB)</small>
-            </div> --}}
-            
             <div class="mb-3 rounded">
                 <div class="row justify-content-end g-2">
                     <div class="col-lg-2">
-                        <button type="submit" class="btn btn-primary w-100">Save</button>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Save</button>
                     </div>
                     <div class="col-lg-2">
-                        <a href="{{ route('applicants.list') }}" class="btn btn-dark w-100">Cancel</a>
+                        <a href="{{ route('head-offices.list') }}" class="btn btn-dark w-100">Cancel</a>
                     </div>
                 </div>
             </div>
@@ -279,71 +177,8 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
     })()
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Dropzone
-        Dropzone.autoDiscover = false;
-        const myDropzone = new Dropzone("#applicantCvDropzone", {
-            url: "/dummy-url",
-            paramName: "applicant_cv",
-            maxFiles: 1,
-            maxFilesize: 5,
-            acceptedFiles: '.docx,.doc,.csv,.pdf',
-            addRemoveLinks: true,
-            autoProcessQueue: false,
-            previewsContainer: "#dropzone-preview",
-            previewTemplate: document.querySelector('#dropzone-preview-list').innerHTML,
-            init: function() {
-                this.on("addedfile", function(file) {
-                    // Sync with regular file input when file is added to Dropzone
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(file);
-                    document.getElementById('applicant_cv').files = dataTransfer.files;
-                    
-                    // Hide regular input when using Dropzone
-                    document.getElementById('regularFileInput').style.display = 'none';
-                });
-                
-                this.on("removedfile", function(file) {
-                    // Clear regular input when file is removed from Dropzone
-                    document.getElementById('applicant_cv').value = '';
-                    document.getElementById('regularFileInput').style.display = 'block';
-                });
-            }
-        });
-
-        // Toggle between upload methods
-        document.getElementById('toggleUploadMethod').addEventListener('click', function() {
-            const dropzone = document.getElementById('applicantCvDropzone');
-            const regularInput = document.getElementById('regularFileInput');
-            
-            if (dropzone.style.display === 'none') {
-                // Switch to Dropzone
-                dropzone.style.display = 'block';
-                regularInput.style.display = 'none';
-                this.textContent = 'Switch to manual file selection';
-            } else {
-                // Switch to regular input
-                dropzone.style.display = 'none';
-                regularInput.style.display = 'block';
-                this.textContent = 'Switch to drag & drop';
-                
-                // Clear any Dropzone files
-                myDropzone.removeAllFiles(true);
-            }
-        });
-
-        // Handle regular file input changes
-        document.getElementById('applicant_cv').addEventListener('change', function() {
-            if (this.files.length > 0) {
-                // Add file to Dropzone if using regular input
-                myDropzone.removeAllFiles(true);
-                myDropzone.addFile(this.files[0]);
-            }
-        });
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
         // Handle form submission
-        const form = document.getElementById('createApplicantForm');
+        const form = document.getElementById('editHeadOfficeForm');
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -353,9 +188,6 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
 
             // Collect form data
             const formData = new FormData(form);
-            
-            // Add any additional data
-            formData.append('job_type', document.getElementById('job_type').value);
           
             fetch(form.action, {
                 method: 'POST',
@@ -370,7 +202,7 @@ $applicant = \Horsefly\Applicant::find($applicant_id);
                 if (data.success) {
                     // Show success message and redirect
                     alert(data.message);
-                    // window.location.href = data.redirect;
+                    window.location.href = data.redirect;
                 } else {
                     // Handle validation errors
                     submitBtn.disabled = false;

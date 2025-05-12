@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\DB;
 use Horsefly\LoginDetail;
 use Illuminate\Support\Carbon;
+use Illuminate\Foundation\Console\Kernel;
 
 class LoginController extends Controller
 {

@@ -75,19 +75,6 @@ class CreateApplicantsTable extends Migration
             $table->foreign('job_title_id')->references('id')->on('job_titles')->onDelete('set null');
             $table->foreign('job_category_id')->references('id')->on('job_categories')->onDelete('set null');
         });
-
-        // Add index for the polymorphic relationship
-        Schema::table('applicants', function (Blueprint $table) {
-            $table->index([
-                'applicant_name',
-                'applicant_email',
-                'applicant_postcode',
-                'job_source_id',
-                'job_category_id',
-                'job_title_id',
-                'user_id',
-            ]);
-        });
     }
 
     /**
