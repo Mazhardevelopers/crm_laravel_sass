@@ -54,7 +54,7 @@
 <div class="row">
     <div class="col-xl-12">
         <div class="card">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="headOffice_table" class="table align-middle mb-3">
                         <thead class="bg-light-subtle">
@@ -64,6 +64,7 @@
                                 <th>Name</th>
                                 <th>PostCode</th>
                                 <th>Website</th>
+                                <th>Notes</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -128,6 +129,7 @@
                     { data: 'office_name', name: 'office_name' },
                     { data: 'office_postcode', name: 'office_postcode' },
                     { data: 'office_website', name: 'office_website' },
+                    { data: 'office_notes', name: 'office_notes' },
                     { data: 'status', name: 'status' },
                     { data: 'action', name: 'action', orderable: false }
                 ],
@@ -207,11 +209,11 @@
         }
         
         // Function to show the notes modal
-        function showNotesModal(notes, applicantName, applicantPostcode) {
+        function showNotesModal(notes, officeName, officePostcode) {
             // Set the notes content in the modal with proper line breaks using HTML
             $('#showNotesModal .modal-body').html(
-                'Head Office Name: <strong>' + applicantName + '</strong><br>' +
-                'Postcode: <strong>' + applicantPostcode + '</strong><br>' +
+                'Head Office Name: <strong>' + officeName + '</strong><br>' +
+                'Postcode: <strong>' + officePostcode + '</strong><br>' +
                 'Notes Detail: <p>' + notes + '</p>'
             );
 
@@ -225,7 +227,7 @@
                         '<div class="modal-dialog modal-dialog-top">' +
                             '<div class="modal-content">' +
                                 '<div class="modal-header">' +
-                                    '<h5 class="modal-title" id="showNotesModalLabel">Applicant Notes</h5>' +
+                                    '<h5 class="modal-title" id="showNotesModalLabel">Head Office Notes</h5>' +
                                     '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
                                 '</div>' +
                                 '<div class="modal-body">' +
@@ -242,12 +244,12 @@
         }
     
         // Function to show the notes modal
-        function addShortNotesModal(applicantID) {
+        function addShortNotesModal(officeID) {
             // Add the modal HTML to the page (only once, if not already present)
             if ($('#shortNotesModal').length === 0) {
                 $('body').append(
                     '<div class="modal fade" id="shortNotesModal" tabindex="-1" aria-labelledby="shortNotesModalLabel" aria-hidden="true">' +
-                        '<div class="modal-dialog modal-lg modal-dialog-centered">' +
+                        '<div class="modal-dialog modal-lg modal-dialog-top">' +
                             '<div class="modal-content">' +
                                 '<div class="modal-header">' +
                                     '<h5 class="modal-title" id="shortNotesModalLabel">Add Notes</h5>' +
@@ -258,14 +260,6 @@
                                         '<div class="mb-3">' +
                                             '<label for="detailsTextarea" class="form-label">Details</label>' +
                                             '<textarea class="form-control" id="detailsTextarea" rows="4" required></textarea>' +
-                                        '</div>' +
-                                        '<div class="mb-3">' +
-                                            '<label for="reasonDropdown" class="form-label">Reason</label>' +
-                                            '<select class="form-select" id="reasonDropdown" required>' +
-                                                '<option value="" disabled selected>Select Reason</option>' +
-                                                '<option value="casual">Casual Notes</option>' +
-                                                '<option value="blocked">Blocked Notes</option>' +
-                                            '</select>' +
                                         '</div>' +
                                     '</form>' +
                                 '</div>' +
@@ -286,20 +280,12 @@
             // Handle the save button click
             $('#saveShortNotesButton').off('click').on('click', function() {
                 const notes = $('#detailsTextarea').val();
-                const reason = $('#reasonDropdown').val();
 
-                if (!notes || !reason) {
+                if (!notes) {
                     if (!notes) {
                         $('#detailsTextarea').addClass('is-invalid');
                         if ($('#detailsTextarea').next('.invalid-feedback').length === 0) {
                             $('#detailsTextarea').after('<div class="invalid-feedback">Please provide details.</div>');
-                        }
-                    }
-                
-                    if (!reason) {
-                        $('#reasonDropdown').addClass('is-invalid');
-                        if ($('#reasonDropdown').next('.invalid-feedback').length === 0) {
-                            $('#reasonDropdown').after('<div class="invalid-feedback">Please select a reason.</div>');
                         }
                     }
                 
@@ -310,31 +296,21 @@
                             $(this).next('.invalid-feedback').remove();
                         }
                     });
-                
-                    $('#reasonDropdown').on('change', function() {
-                        if ($(this).val()) {
-                            $(this).removeClass('is-invalid').addClass('is-valid');
-                            $(this).next('.invalid-feedback').remove();
-                        }
-                    });
-                
+
                     return;
                 }
 
                 // Remove validation errors if inputs are valid
                 $('#detailsTextarea').removeClass('is-invalid').addClass('is-valid');
                 $('#detailsTextarea').next('.invalid-feedback').remove();
-                $('#reasonDropdown').removeClass('is-invalid').addClass('is-valid');
-                $('#reasonDropdown').next('.invalid-feedback').remove();
 
                 // Send the data via AJAX
                 $.ajax({
                     url: '{{ route("storeHeadOfficeShortNotes") }}', // Replace with your endpoint
                     type: 'POST',
                     data: {
-                        applicant_id: applicantID,
+                        office_id: officeID,
                         details: notes,
-                        reason: reason,
                         _token: '{{ csrf_token() }}' // Directly include token in data
                     },
                     success: function(response) {
@@ -342,17 +318,139 @@
                         $('#shortNotesModal').modal('hide'); // Close the modal
                         $('#shortNotesForm')[0].reset(); // Clear the form
                         $('#detailsTextarea').removeClass('is-valid'); // Remove valid class
-                        $('#reasonDropdown').removeClass('is-valid'); // Remove valid class
                         $('#detailsTextarea').next('.invalid-feedback').remove(); // Remove error message
-                        $('#reasonDropdown').next('.invalid-feedback').remove(); // Remove error message
                         
-                        $('#applicants_table').DataTable().ajax.reload(); // Reload the DataTable
+                        $('#headOffice_table').DataTable().ajax.reload(); // Reload the DataTable
                     },
                     error: function(xhr) {
                         alert('An error occurred while saving notes.');
                     }
                 });
             });
+        }
+
+        function showDetailsModal(officeId, name, postcode, status) {
+            // Set the notes content in the modal as a table
+            $('#showDetailsModal .modal-body').html(
+                '<table class="table table-bordered">' +
+                    '<tr>' +
+                        '<th>Head Office ID</th>' +
+                        '<td>' + officeId + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<th>Name</th>' +
+                        '<td>' + name + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<th>Postcode</th>' +
+                        '<td>' + postcode + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<th>Status</th>' +
+                        '<td>' + status + '</td>' +
+                    '</tr>' +
+                '</table>'
+            );
+
+            // Show the modal
+            $('#showDetailsModal').modal('show');
+
+            // Add the modal HTML to the page (only once, if not already present)
+            if ($('#showDetailsModal').length === 0) {
+                $('body').append(
+                    '<div class="modal fade" id="showDetailsModal" tabindex="-1" aria-labelledby="showDetailsModalLabel" aria-hidden="true">' +
+                        '<div class="modal-dialog modal-lg modal-dialog-top">' +
+                            '<div class="modal-content">' +
+                                '<div class="modal-header">' +
+                                    '<h5 class="modal-title" id="showDetailsModalLabel">Head Office Details</h5>' +
+                                    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                                '</div>' +
+                                '<div class="modal-body">' +
+                                    '<!-- Notes content will be dynamically inserted here -->' +
+                                '</div>' +
+                                '<div class="modal-footer">' +
+                                    '<button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }
+        }
+
+        // Function to show the notes modal
+        function viewNotesHistory(id) {
+            // Make an AJAX call to retrieve notes history data
+            $.ajax({
+                url: '{{ route("getModuleNotesHistory") }}', // Your backend URL to fetch notes history, replace it with your actual URL
+                type: 'GET',
+                data: { 
+                    id: id,
+                    module: 'Horsefly\\Applicant'
+
+                }, // Pass the id to your server to fetch the corresponding applicant's notes
+                success: function(response) {
+                    var notesHtml = '';  // This will hold the combined HTML for all notes
+
+                    // Check if the response data is empty
+                    if (response.data.length === 0) {
+                        notesHtml = '<p>No record found.</p>';
+                    } else {
+                        // Loop through the response array (assuming it's an array of notes)
+                        response.data.forEach(function(note) {
+                            var notes = note.details;
+                            var created = moment(note.created_at).format('DD MMM YYYY, h:mmA');
+                            var status = note.status;
+
+                            // Determine the badge class based on the status value
+                            var statusClass = (status == 1) ? 'bg-success' : 'bg-dark'; // 'bg-success' for active, 'bg-dark' for inactive
+                            var statusText = (status == 1) ? 'Active' : 'Inactive';
+
+                            // Append each note's details to the notesHtml string
+                            notesHtml += 
+                                '<div class="note-entry">' +
+                                    '<p><strong>Dated:</strong> ' + created + '</p>' +
+                                    '<p><strong>Status:</strong> <span class="badge ' + statusClass + '">' + statusText + '</span></p>' +
+                                    '<p><strong>Notes Detail:</strong> <br>' + notes + '</p>' +
+                                '</div><hr>';  // Add a separator between notes
+                        });
+                    }
+
+                    // Set the combined notes content in the modal
+                    $('#showNotesModal .modal-body').html(notesHtml);
+
+                    // Show the modal
+                    $('#showNotesModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    console.log("Error fetching notes history: " + error);
+                    // Optionally, you can display an error message in the modal
+                    $('#showNotesModal .modal-body').html('<p>There was an error retrieving the notes. Please try again later.</p>');
+                    $('#showNotesModal').modal('show');
+                }
+            });
+
+            // Add the modal HTML to the page (only once, if not already present)
+            if ($('#showNotesModal').length === 0) {
+                $('body').append(
+                    '<div class="modal fade" id="showNotesModal" tabindex="-1" aria-labelledby="showNotesModalLabel" aria-hidden="true">' +
+                        '<div class="modal-dialog modal-dialog-scrollable modal-dialog-top">' +
+                            '<div class="modal-content">' +
+                                '<div class="modal-header">' +
+                                    '<h5 class="modal-title" id="showNotesModalLabel">Applicant Notes History</h5>' +
+                                    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                                '</div>' +
+                                '<div class="modal-body">' +
+                                    '<!-- Notes content will be dynamically inserted here -->' +
+                                '</div>' +
+                                '<div class="modal-footer">' +
+                                    '<button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }
         }
     </script>
     

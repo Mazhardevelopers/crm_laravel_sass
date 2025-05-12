@@ -56,7 +56,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
         Route::get('{id}', [HeadOfficeController::class, 'applicantDetails'])->name('head-offices.details');
     });
     Route::get('getHeadOffices', [HeadOfficeController::class, 'getHeadOffices'])->name('getHeadOffices');
-    Route::post('storeHeadOfficeShortNotes', [ApplicantController::class, 'storeHeadOfficeShortNotes'])->name('storeHeadOfficeShortNotes');
+    Route::post('storeHeadOfficeShortNotes', [HeadOfficeController::class, 'storeHeadOfficeShortNotes'])->name('storeHeadOfficeShortNotes');
 
     Route::group(['prefix' => 'units'], function () {
         Route::get('', [UnitController::class, 'index'])->name('units.list');

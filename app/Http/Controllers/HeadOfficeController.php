@@ -153,6 +153,16 @@ class HeadOfficeController extends Controller
                 ->addColumn('updated_at', function ($office) {
                     return $office->formatted_updated_at; // Using accessor
                 })
+                ->addColumn('office_notes', function ($office) {
+                    $notes = htmlspecialchars($office->office_notes, ENT_QUOTES, 'UTF-8');
+                    $name = htmlspecialchars($office->office_name, ENT_QUOTES, 'UTF-8');
+                    $postcode = htmlspecialchars($office->office_postcode, ENT_QUOTES, 'UTF-8');
+
+                    // Tooltip content with additional data-bs-placement and title
+                    return '<a href="#" title="View Note" onclick="showNotesModal(\'' . $notes . '\', \'' . $name . '\', \'' . $postcode . '\')">
+                                <iconify-icon icon="solar:eye-scan-bold" class="text-primary fs-24"></iconify-icon>
+                            </a>';
+                })
                 ->addColumn('status', function ($office) {
                     $status = '';
                     if ($office->status) {
@@ -164,21 +174,34 @@ class HeadOfficeController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($office) {
+                    $postcode = $office->formatted_postcode;
+                    $status = '';
+
+                    if ($office->status) {
+                        $status = '<span class="badge bg-success">Active</span>';
+                    } else {
+                        $status = '<span class="badge bg-secondary">Inactive</span>';
+                    }
                     return '<div class="btn-group dropstart">
                                 <button type="button" class="border-0 bg-transparent p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <iconify-icon icon="solar:menu-dots-square-outline" class="align-middle fs-24 text-dark"></iconify-icon>
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="' . route('head-offices.edit', ['id' => $office->id]) . '">Edit</a></li>
-                                    <li><a class="dropdown-item" href="' . route('head-offices.details', ['id' => $office->id]) . '">View</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="addNoteModal(' . $office->id . ')">Add Note</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="showDetailsModal(
+                                    ' . $office->id . ',
+                                    \'' . addslashes(htmlspecialchars($office->office_name)) . '\',
+                                    \'' . addslashes(htmlspecialchars($postcode)) . '\',
+                                    \'' . addslashes(htmlspecialchars($status)) . '\'
+                                )">View</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="addShortNotesModal(' . $office->id . ')">Add Note</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="#" onclick="viewNotesHistory(' . $office->id . ')">Notes History</a></li>
                                 </ul>
                             </div>';
                 })
 
-                ->rawColumns(['status', 'action', 'website'])
+                ->rawColumns(['office_notes', 'status', 'action', 'website'])
                 ->make(true);
         }
     }

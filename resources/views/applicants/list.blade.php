@@ -58,7 +58,7 @@
 <div class="row">
     <div class="col-xl-12">
         <div class="card">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="applicants_table" class="table align-middle mb-3">
                         <thead class="bg-light-subtle">
@@ -284,7 +284,7 @@
         }
 
         // Function to show the notes modal
-       function viewNotesHistory(id) {
+        function viewNotesHistory(id) {
             // Make an AJAX call to retrieve notes history data
             $.ajax({
                 url: '{{ route("getModuleNotesHistory") }}', // Your backend URL to fetch notes history, replace it with your actual URL
@@ -358,7 +358,6 @@
             }
         }
 
-    
         // Function to show the notes modal
         function addShortNotesModal(applicantID) {
             // Add the modal HTML to the page (only once, if not already present)
